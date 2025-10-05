@@ -27,11 +27,12 @@ const eslintConfig = [
   // === Custom style rules ===
   {
     rules: {
-      semi: ['warn', 'never'],                            // No semicolons
-      quotes: ['warn', 'single', { avoidEscape: true }],  // Single quotes for JS/TS
-      'jsx-quotes': ['warn', 'prefer-double'],            // Double quotes for JSX
       'comma-dangle': ['warn', 'always-multiline'],       // enforce for multiline objects/arrays
+      'eol-last': ['warn', 'always'],                     // Enforce exactly one newline at EOF
+      'jsx-quotes': ['warn', 'prefer-double'],            // Double quotes for JSX
       'object-curly-spacing': ['warn', 'always'],         // spacing / formatting consistency
+      quotes: ['warn', 'single', { avoidEscape: true }],  // Single quotes for JS/TS
+      semi: ['warn', 'never'],                            // No semicolons
     },
   },
 ]
