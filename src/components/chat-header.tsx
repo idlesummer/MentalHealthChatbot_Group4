@@ -1,8 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { PlusIcon, VercelIcon } from './icons'
 
 // TODO: simplify sidebar logic later
 export function ChatHeader(props: {
@@ -10,23 +8,9 @@ export function ChatHeader(props: {
   isReadonly: boolean
   selectedVisibilityType: string
 }) {
-  const router = useRouter()
 
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
-      {/* New Chat button */}
-      <Button
-        className="ml-auto h-8 px-2 md:h-fit md:px-2"
-        onClick={() => {
-          router.push('/')
-          router.refresh()
-        }}
-        variant="outline"
-      >
-        <PlusIcon />
-        <span className="md:sr-only">New Chat</span>
-      </Button>
-
       {/* Deploy with Vercel button */}
       <Button
         asChild
