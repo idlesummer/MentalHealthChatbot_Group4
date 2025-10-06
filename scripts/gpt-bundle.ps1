@@ -14,7 +14,7 @@ Bundles all human-readable source files into
 #>
 
 # === CONFIG ===
-$projectRoot = "./"
+$projectRoot = "./src"
 $outputFile = "docs/bundle.txt"
 $excludedExtensions = @('.exe', '.dll', '.obj', '.pdb', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.svg')
 
