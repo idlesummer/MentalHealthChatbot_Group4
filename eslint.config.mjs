@@ -29,6 +29,7 @@ const eslintConfig = [
     rules: {
       'comma-dangle': ['warn', 'always-multiline'],       // enforce for multiline objects/arrays
       'eol-last': ['warn', 'always'],                     // Enforce exactly one newline at EOF
+      'import/no-anonymous-default-export': 'off',        // Allow anonymous export
       'jsx-quotes': ['warn', 'prefer-double'],            // Double quotes for JSX
       'object-curly-spacing': ['warn', 'always'],         // spacing / formatting consistency
       quotes: ['warn', 'single', { avoidEscape: true }],  // Single quotes for JS/TS
