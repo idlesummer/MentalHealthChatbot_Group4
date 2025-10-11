@@ -1,7 +1,17 @@
-export default function RootLayout({ children }: Readonly<React.PropsWithChildren>) {
+import { CSSProperties } from 'react'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { AppSidebar } from '@/components/app-sidebar'
+import { ChatHeader } from '@/components/chat-header'
+
+
+export default function ChatLayout({ children }: React.PropsWithChildren) {
   return (
-    <>
-      {children}
-    </>
+    <SidebarProvider style={{ '--sidebar-width': '350px'} as CSSProperties}>
+      <AppSidebar />
+      <SidebarInset>
+        <ChatHeader />
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
