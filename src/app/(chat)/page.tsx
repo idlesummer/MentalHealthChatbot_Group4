@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Send } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 
@@ -24,6 +23,11 @@ const initialMessages = [
 export default function ScrollAreaChat() {
   const [messages, setMessages] = useState(initialMessages)
   const [input, setInput] = useState('')
+  const endRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const sendMessage = () => {
     if (input.trim()) {
@@ -37,6 +41,11 @@ export default function ScrollAreaChat() {
       setMessages([...messages, newMessage])
       setInput('')
     }
+  }
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    sendMessage()
   }
 
   return (
@@ -65,24 +74,19 @@ export default function ScrollAreaChat() {
               </div>
             </div>
           ))}
+          <div ref={endRef} />
         </div>
       </ScrollArea>
 
       {/* Input */}
       <div className="border-t px-5 py-3">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            sendMessage()
-          }}
-          className="flex gap-2"
-        >
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px]"
-        />
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px]"
+          />
           <Button type="submit" size="icon">
             <Send className="h-4 w-4" />
           </Button>
