@@ -27,13 +27,13 @@ type NavItem = {
   isActive: boolean
 }
 
-export interface ChatlistSidebarProps
+export interface ChatListProps
   extends React.ComponentProps<typeof Sidebar> {
   activeItem: NavItem
   mails: MailItem[]
 }
 
-export function ChatlistSidebar({ activeItem, mails, ...props }: ChatlistSidebarProps) {
+export function ChatList({ activeItem, mails, ...props }: ChatListProps) {
   return (
     <Sidebar collapsible="none" {...props}>
       <SidebarHeader className="gap-3.5 border-b p-4">

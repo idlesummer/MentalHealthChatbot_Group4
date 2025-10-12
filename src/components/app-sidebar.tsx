@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { ArchiveX, File, MessageCircleMore, Send, Trash2 } from 'lucide-react'
 import { Sidebar } from '@/components/ui/sidebar'
 import { NavMain } from './nav-main'
-import { ChatlistSidebar } from './chatlist-sidebar'
+import { ChatList } from './chat-list'
 
 // This is sample data
 const data = {
@@ -156,7 +156,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setActiveItem={setActiveItem}
         setMails={setMails}
       />
-      <ChatlistSidebar 
+      <ChatList 
         activeItem={activeItem}
         mails={mails}
       />
