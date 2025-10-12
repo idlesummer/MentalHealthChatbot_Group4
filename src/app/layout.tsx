@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<React.PropsWithChildren>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className="antialiased h-full overflow-hidden">
         {children}
       </body>
     </html>
