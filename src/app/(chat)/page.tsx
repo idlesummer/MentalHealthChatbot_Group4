@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Send } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
 
 const initialMessages = [
   { id: 1, user: 'Alex', message: 'Hey team! How\'s the project going?', time: '10:00 AM' },
@@ -23,13 +24,6 @@ const initialMessages = [
 export default function ScrollAreaChat() {
   const [messages, setMessages] = useState(initialMessages)
   const [input, setInput] = useState('')
-  const scrollRef = useRef<HTMLDivElement>(null)
-  
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [messages])
 
   const sendMessage = () => {
     if (input.trim()) {
@@ -48,35 +42,34 @@ export default function ScrollAreaChat() {
   return (
     <>
       {/* Scrollable message area */}
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full p-4" ref={scrollRef}>
-          <div className="space-y-4">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex gap-3 ${msg.user === 'You' ? 'flex-row-reverse' : ''}`}
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{msg.user[0]}</AvatarFallback>
-                </Avatar>
-                <div className={`flex flex-col gap-1 ${msg.user === 'You' ? 'items-end' : ''}`}>
-                  <div
-                    className={`rounded-lg px-3 py-2 max-w-[250px] ${
-                      msg.user === 'You' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                    }`}
-                  >
-                    <p className="text-sm">{msg.message}</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{msg.time}</span>
+
+      <ScrollArea className="h-full px-5 overflow-hidden">
+        <div className="space-y-4 py-5">
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex gap-3 ${msg.user === 'You' ? 'flex-row-reverse' : ''}`}
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>{msg.user[0]}</AvatarFallback>
+              </Avatar>
+              <div className={`flex flex-col gap-1 ${msg.user === 'You' ? 'items-end' : ''}`}>
+                <div
+                  className={`rounded-lg px-3 py-2 max-w-[250px] ${
+                    msg.user === 'You' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  }`}
+                >
+                  <p className="text-sm">{msg.message}</p>
                 </div>
+                <span className="text-xs text-muted-foreground">{msg.time}</span>
               </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
 
       {/* Input */}
-      <div className="border-t p-3 shrink-0">
+      <div className="border-t px-5 py-3">
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -84,12 +77,12 @@ export default function ScrollAreaChat() {
           }}
           className="flex gap-2"
         >
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1"
-          />
+        <Textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+          className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px]"
+        />
           <Button type="submit" size="icon">
             <Send className="h-4 w-4" />
           </Button>

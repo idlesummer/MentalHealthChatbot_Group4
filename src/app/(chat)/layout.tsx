@@ -8,11 +8,9 @@ export default function ChatLayout({ children }: React.PropsWithChildren) {
   return (
     <SidebarProvider style={{ '--sidebar-width': '420px' } as CSSProperties}>
       <AppSidebar />
-      <SidebarInset>
-        <div className="flex flex-col h-screen overflow-hidden">
-          <ChatHeader />
-          {children}
-        </div>
+      <SidebarInset className="h-screen">
+        <ChatHeader />
+        {children}
       </SidebarInset>
     </SidebarProvider>
   )
