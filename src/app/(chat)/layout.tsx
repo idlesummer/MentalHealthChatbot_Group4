@@ -6,7 +6,7 @@ import { ChatHeader } from '@/components/chat-header'
 
 export default function ChatLayout({ children }: React.PropsWithChildren) {
   return (
-    <SidebarProvider style={{ '--sidebar-width': '350px' } as CSSProperties}>
+    <SidebarProvider style={{ '--sidebar-width': '420px' } as CSSProperties}>
       <AppSidebar />
       <SidebarInset>
         <ChatHeader />

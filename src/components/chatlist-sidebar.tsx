@@ -65,7 +65,7 @@ export function ChatlistSidebar({ activeItem, mails, ...props }: ChatlistSidebar
                   <span className="font-medium">{mail.name}</span>
                   <span className="ml-auto text-xs">{mail.date}</span>
                 </div>
-                <span className="line-clamp-2 w-[260px] text-s whitespace-break-spaces">
+                <span className="line-clamp-2 w-auto text-s whitespace-break-spaces">
                   {mail.teaser}
                 </span>
               </Link>
