@@ -1,7 +1,6 @@
 'use client'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 
 export default function ChatPage() {
@@ -30,45 +29,43 @@ const messages = [
 
   return (
     <main className="flex flex-col flex-1 p-4">
-      <ScrollArea className="flex-1 pr-4">
-        <div className="flex flex-col gap-4">
-          {messages.map((msg, i) => {
-            const isUser = msg.sender === 'user'
-            return (
+      <div className="flex flex-col gap-4">
+        {messages.map((msg, i) => {
+          const isUser = msg.sender === 'user'
+          return (
+            <div
+              key={i}
+              className={cn(
+                'flex items-end gap-3 whitespace-pre-wrap',
+                isUser ? 'justify-end' : 'justify-start'
+              )}
+            >
+              {!isUser && (
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src="/avatars/bot.svg" />
+                  <AvatarFallback>AI</AvatarFallback>
+                </Avatar>
+              )}
               <div
-                key={i}
                 className={cn(
-                  'flex items-end gap-3 whitespace-pre-wrap',
-                  isUser ? 'justify-end' : 'justify-start'
+                  'max-w-[70%] rounded-lg px-4 py-2 text-sm leading-relaxed shadow-sm',
+                  isUser
+                    ? 'bg-primary text-primary-foreground rounded-br-none'
+                    : 'bg-muted text-foreground rounded-bl-none'
                 )}
               >
-                {!isUser && (
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src="/avatars/bot.svg" />
-                    <AvatarFallback>AI</AvatarFallback>
-                  </Avatar>
-                )}
-                <div
-                  className={cn(
-                    'max-w-[70%] rounded-lg px-4 py-2 text-sm leading-relaxed shadow-sm',
-                    isUser
-                      ? 'bg-primary text-primary-foreground rounded-br-none'
-                      : 'bg-muted text-foreground rounded-bl-none'
-                  )}
-                >
-                  {msg.message}
-                </div>
-                {isUser && (
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src="/avatars/user.svg" />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                )}
+                {msg.message}
               </div>
-            )
-          })}
-        </div>
-      </ScrollArea>
+              {isUser && (
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src="/avatars/user.svg" />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </main>
   )
 }
