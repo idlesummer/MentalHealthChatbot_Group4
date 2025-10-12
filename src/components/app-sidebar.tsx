@@ -1,37 +1,23 @@
 'use client'
 
-import * as React from 'react'
-import { ArchiveX, Command, File, Inbox, Send, Trash2 } from 'lucide-react'
-
-import { NavUser } from '@/components/nav-user'
-import { Label } from '@/components/ui/label'
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarInput,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar'
-import { Switch } from '@/components/ui/switch'
+import { useState } from 'react'
+import { ArchiveX, File, MessageCircleMore, Send, Trash2 } from 'lucide-react'
+import { Sidebar } from '@/components/ui/sidebar'
+import { NavMain } from './nav-main'
+import { ChatlistSidebar } from './chatlist-sidebar'
 
 // This is sample data
 const data = {
   user: {
     name: 'shadcn',
     email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
+    avatar: '/avatars/sample-avatar.svg',
   },
   navMain: [
     {
-      title: 'Inbox',
+      title: 'Chats',
       url: '#',
-      icon: Inbox,
+      icon: MessageCircleMore,
       isActive: true,
     },
     {
@@ -146,9 +132,17 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Note: I'm using state to show active item.
   // IRL you should use the url/router.
-  const [activeItem, setActiveItem] = React.useState(data.navMain[0])
-  const [mails, setMails] = React.useState(data.mails)
-  const { setOpen } = useSidebar()
+  const [activeItem, setActiveItem] = useState(data.navMain[0])
+  const [mails, setMails] = useState(data.mails)
+
+  /* 
+    Notes:
+    - `collapsible="icon"` renders with border-r
+    - `collapsible="none"` renders no borders
+    - The parent sidebar (icon mode) has a border
+    - Second sidebar (none mode) covers the parent's border
+    - `overflow-hidden` makes so that child sidebars sit below the parent borders
+  */
 
   return (
     <Sidebar
@@ -156,107 +150,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
       {...props}
     >
-      {/* This is the first sidebar */}
-      {/* We disable collapsible and adjust width to icon. */}
-      {/* This will make the sidebar appear as icons. */}
-      <Sidebar
-        collapsible="none"
-        className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
-      >
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className="md:h-8 md:p-0">
-                <a href="#">
-                  <div className="flex items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground aspect-square size-8">
-                    <Command className="size-4" />
-                  </div>
-                  <div className="grid flex-1 text-sm leading-tight text-left">
-                    <span className="font-medium truncate">Acme Inc</span>
-                    <span className="text-xs truncate">Enterprise</span>
-                  </div>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent className="px-1.5 md:px-0">
-              <SidebarMenu>
-                {data.navMain.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      tooltip={{
-                        children: item.title,
-                        hidden: false,
-                      }}
-                      onClick={() => {
-                        setActiveItem(item)
-                        const mail = data.mails.sort(() => Math.random() - 0.5)
-                        setMails(
-                          mail.slice(
-                            0,
-                            Math.max(5, Math.floor(Math.random() * 10) + 1),
-                          ),
-                        )
-                        setOpen(true)
-                      }}
-                      isActive={activeItem?.title === item.title}
-                      className="px-2.5 md:px-2"
-                    >
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <NavUser user={data.user} />
-        </SidebarFooter>
-      </Sidebar>
-
-      {/* This is the second sidebar */}
-      {/* We disable collapsible and let it fill remaining space */}
-      <Sidebar collapsible="none" className="flex-1 hidden md:flex">
-        <SidebarHeader className="gap-3.5 border-b p-4">
-          <div className="flex items-center justify-between w-full">
-            <div className="text-base font-medium text-foreground">
-              {activeItem?.title}
-            </div>
-            <Label className="flex items-center gap-2 text-sm">
-              <span>Unreads</span>
-              <Switch className="shadow-none" />
-            </Label>
-          </div>
-          <SidebarInput placeholder="Type to search..." />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup className="px-0">
-            <SidebarGroupContent>
-              {mails.map((mail) => (
-                <a
-                  href="#"
-                  key={mail.email}
-                  className="flex flex-col items-start gap-2 p-4 text-sm leading-tight border-b hover:bg-sidebar-accent hover:text-sidebar-accent-foreground whitespace-nowrap last:border-b-0"
-                >
-                  <div className="flex items-center w-full gap-2">
-                    <span>{mail.name}</span>{' '}
-                    <span className="ml-auto text-xs">{mail.date}</span>
-                  </div>
-                  <span className="font-medium">{mail.subject}</span>
-                  <span className="line-clamp-2 w-[260px] text-xs whitespace-break-spaces">
-                    {mail.teaser}
-                  </span>
-                </a>
-              ))}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
+      <NavMain 
+        data={data}
+        activeItem={activeItem}
+        setActiveItem={setActiveItem}
+        setMails={setMails}
+      />
+      <ChatlistSidebar 
+        activeItem={activeItem}
+        mails={mails}
+      />
     </Sidebar>
   )
 }

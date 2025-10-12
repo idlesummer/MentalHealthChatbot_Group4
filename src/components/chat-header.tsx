@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   Breadcrumb,
@@ -8,14 +8,11 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { Separator } from '@/components/ui/separator'
-import { SidebarTrigger } from '@/components/ui/sidebar'
+import { HeaderActions } from './header-actions'
 
 export function ChatHeader() {
   return (
-    <header className="sticky top-0 flex items-center gap-2 p-4 border-b bg-background shrink-0">
-      <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="mr-2 !h-4" />
+    <header className="sticky top-0 flex items-center justify-between p-5 border-b bg-background shrink-0">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem className="hidden md:block">
@@ -27,6 +24,7 @@ export function ChatHeader() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+      <HeaderActions />
     </header>
   )
 }
