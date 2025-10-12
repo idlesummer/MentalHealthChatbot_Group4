@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArchiveX, File, MessageCircleMore, Send, Trash2 } from 'lucide-react'
+import { ArchiveX, File, MessageCircleMore, Send, Trash2, Sun } from 'lucide-react'
 import { Sidebar } from '@/components/ui/sidebar'
 import { NavMain } from './nav-main'
 import { ChatList } from './chat-list'
@@ -42,6 +42,12 @@ const data = {
       title: 'Trash',
       url: '#',
       icon: Trash2,
+      isActive: false,
+    },
+    {
+      title: 'Theme',
+      url: '#',
+      icon: Sun,
       isActive: false,
     },
   ],
