@@ -1,7 +1,9 @@
 export default function ChatPage() {
   return (
-    <>
-      Hello World!
-    </>
+    <div className="flex items-center justify-center h-screen">
+      <span>
+        Hello World!
+      </span>        
+    </div>
   )
 }
