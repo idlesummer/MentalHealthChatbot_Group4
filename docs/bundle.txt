@@ -26,8 +26,44 @@ export default function RootLayout({ children }: Readonly<React.PropsWithChildre
 
 
 ------------------------------
+ FILE:  not-found.tsx
+ PATH:  app\not-found.tsx
+------------------------------
+
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { TypographyH1, TypographyP } from '@/components/ui/typography'
+
+export default function NotFound() {
+  return (
+    <div className="flex flex-col items-center justify-center h-screen text-center space-y-6">
+      <TypographyH1>404 - Page Not Found</TypographyH1>
+      <TypographyP className="text-muted-foreground max-w-md">
+        Sorry, the page youâ€™re looking for doesnâ€™t exist or may have been moved.
+      </TypographyP>
+      <Button asChild>
+        <Link href="/">Go back to Home</Link>
+      </Button>
+    </div>
+  )
+}
+
+
+------------------------------
+ FILE:  page.tsx
+ PATH:  app\page.tsx
+------------------------------
+
+import { redirect } from 'next/navigation'
+
+export default function Home() {
+  redirect('/chats')
+}
+
+
+------------------------------
  FILE:  layout.tsx
- PATH:  app\(chat)\layout.tsx
+ PATH:  app\(chat)\chats\layout.tsx
 ------------------------------
 
 import { CSSProperties } from 'react'
@@ -49,78 +85,33 @@ export default function ChatLayout({ children }: React.PropsWithChildren) {
 
 ------------------------------
  FILE:  page.tsx
- PATH:  app\(chat)\page.tsx
+ PATH:  app\(chat)\chats\page.tsx
 ------------------------------
 
-'use client'
+import { PingPongLoader } from '@/components/ping-pong-loader'
+import { TypographyH3, TypographyMuted } from '@/components/ui/typography'
 
-import { useEffect, useRef, useState } from 'react'
-import { ChatHeader } from '@/components/chat-header'
-import { ChatMessage, ChatMessages } from '@/components/chat-messages'
-import { ChatInput } from '@/components/chat-input'
-
-const initialMessages = [
-  { id: 1, user: 'Pebble', message: 'Hi there! I\'m Pebble, your mental health companion ðŸŒ± How are you feeling today?', time: '9:00 AM' },
-  { id: 2, user: 'You', message: 'Hey Pebble. Honestly, I\'ve been feeling really stressed lately.', time: '9:01 AM' },
-  { id: 3, user: 'Pebble', message: 'I\'m really glad you reached out. Stress can be heavy â€” what\'s been weighing on your mind the most?', time: '9:02 AM' },
-  { id: 4, user: 'You', message: 'Mostly school and deadlines. It feels like everything\'s piling up.', time: '9:03 AM' },
-  { id: 5, user: 'Pebble', message: 'That sounds overwhelming ðŸ˜” When things stack up like that, our minds can feel cluttered. Have you had any breaks recently?', time: '9:04 AM' },
-  { id: 6, user: 'You', message: 'Not really. I just keep pushing through, even when I\'m exhausted.', time: '9:05 AM' },
-  { id: 7, user: 'Pebble', message: 'That takes a lot of strength. Sometimes resting isn\'t giving up â€” it\'s recharging so you can keep going. What helps you relax, even a little?', time: '9:06 AM' },
-  { id: 8, user: 'You', message: 'I usually listen to music or draw when I can.', time: '9:07 AM' },
-  { id: 9, user: 'Pebble', message: 'Those are wonderful outlets ðŸŽ¨ðŸŽ§ Creative expression can really help release built-up tension. What kind of music do you turn to when you\'re stressed?', time: '9:08 AM' },
-  { id: 10, user: 'You', message: 'Mostly calm instrumentals or lofi. It helps me focus.', time: '9:09 AM' },
-  { id: 11, user: 'Pebble', message: 'That\'s a great choice. Music like that can help slow your breathing and calm your thoughts. Would you like to try a short grounding exercise together?', time: '9:10 AM' },
-  { id: 12, user: 'You', message: 'Sure, I\'d like that.', time: '9:11 AM' },
-  { id: 13, user: 'Pebble', message: 'Alright ðŸŒ¿ Try to notice your breathing. Inhale deeply through your noseâ€¦ hold for a momentâ€¦ and exhale slowly through your mouth. Let your shoulders relax as you do.', time: '9:12 AM' },
-  { id: 14, user: 'You', message: 'That actually helped a bit.', time: '9:14 AM' },
-  { id: 15, user: 'Pebble', message: 'I\'m really glad to hear that ðŸ˜Š Sometimes small moments of calm can remind us that we can still find peace, even in busy times.', time: '9:15 AM' },
-  { id: 16, user: 'You', message: 'Yeahâ€¦ I guess I just forget to pause sometimes.', time: '9:16 AM' },
-  { id: 17, user: 'Pebble', message: 'That\'s completely normal. You\'re doing your best â€” and that\'s enough. Maybe we can set a tiny reminder for short breaks during your study sessions?', time: '9:17 AM' },
-  { id: 18, user: 'You', message: 'That might actually help me a lot.', time: '9:18 AM' },
-  { id: 19, user: 'Pebble', message: 'Great! Try starting with a 5-minute pause every hour â€” stretch, breathe, hydrate. You\'ll be surprised how much it helps your focus.', time: '9:19 AM' },
-  { id: 20, user: 'You', message: 'Thanks, Pebble. I feel lighter after talking with you.', time: '9:20 AM' },
-]
-
-export default function ScrollAreaChat() {
-  const [messages, setMessages] = useState(initialMessages)
-  const [input, setInput] = useState('')
-  const endRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length])
-
-  const handleSend = (message: string) => {
-    if (!message.trim()) return
-    const newMessage = {
-      id: messages.length + 1,
-      user: 'You',
-      message,
-      time: new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    }
-    setMessages(prev => [...prev, newMessage])
-    setInput('')
-  }
-
+export default function ChatPage() {
   return (
-    <>
-      <ChatHeader />
-      <ChatMessages>
-        {messages.map(m => <ChatMessage key={m.id} message={m} />)}
-        <div ref={endRef} />
-      </ChatMessages>
-      <ChatInput
-        value={input}
-        onChange={setInput}
-        onSend={handleSend}
-      />
-    </>
+    <div className="flex flex-col items-center justify-center h-screen space-y-4">
+      <PingPongLoader  />
+      <div className="flex flex-col items-center space-y-1">
+        <TypographyH3 className="text-muted-foreground">
+          Start chatting now ðŸ˜Š
+        </TypographyH3>
+        <TypographyMuted>
+          Pick a chat on the left to begin
+        </TypographyMuted>
+      </div>
+    </div>
   )
 }
+
+
+------------------------------
+ FILE:  page.tsx
+ PATH:  app\(chat)\chats\[id]\page.tsx
+------------------------------
 
 
 ------------------------------
@@ -917,6 +908,43 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+  )
+}
+
+
+------------------------------
+ FILE:  ping-pong-loader.tsx
+ PATH:  components\ping-pong-loader.tsx
+------------------------------
+
+'use client'
+
+export function PingPongLoader() {
+  return (
+    <div>
+      <div className="loader" />
+      <style jsx>{`
+        .loader {
+          width: 80px;
+          height: 70px;
+          border: 5px solid #000;
+          padding: 0 8px;
+          box-sizing: border-box;
+          background:
+            linear-gradient(#fff 0 0) 0    0/8px 20px,
+            linear-gradient(#fff 0 0) 100% 0/8px 20px,
+            radial-gradient(farthest-side,#fff 90%,#0000) 0 5px/8px 8px content-box,
+            #333; /* â† lighter than pure black */
+          background-repeat: no-repeat; 
+          animation: l3 2s infinite linear;
+        }
+        @keyframes l3{
+          25% {background-position: 0 0   ,100% 100%,100% calc(100% - 5px)}
+          50% {background-position: 0 100%,100% 100%,0    calc(100% - 5px)}
+          75% {background-position: 0 100%,100%    0,100% 5px}
+        }
+      `}</style>
+    </div>
   )
 }
 

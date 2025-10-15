@@ -36,7 +36,7 @@ export interface ChatListProps
 
 export function ChatList({ activeItem, mails, ...props }: ChatListProps) {
   return (
-    <Sidebar collapsible="none" {...props}>
+    <Sidebar collapsible="none" className="bg-background" {...props}>
       <SidebarHeader className="space-y-2 border-b p-4">
         <ChatListHeader title={activeItem?.title} />  
       </SidebarHeader>
@@ -70,7 +70,7 @@ function ChatListHeader({ title }: { title: string }) {
 
 function ChatListItem({ mail }: { mail: MailItem }) {
   return (
-    <Link href="#" className="
+    <Link href="/chat/some-user-id" className="
       flex items-center gap-3 p-4
       border-b text-sm leading-snug
       hover:bg-sidebar-accent hover:text-sidebar-accent-foreground

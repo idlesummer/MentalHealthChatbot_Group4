@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { TypographyH1, TypographyP } from '@/components/ui/typography'
 
-export default function NotFound() {
+export default function NotFoundPage() {
   return (
     <div className="flex flex-col items-center justify-center h-screen text-center space-y-6">
       <TypographyH1>404 - Page Not Found</TypographyH1>

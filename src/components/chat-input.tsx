@@ -19,13 +19,13 @@ export function ChatInput({ value, onChange, onSend }: ChatInputProps) {
   }
 
   return (
-    <div className="border-t px-5 py-3">
+    <div className="border-t px-6 py-3">
       <form onSubmit={handleSubmit} className="flex gap-2">
         <Textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px]"
+          className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px] rounded-full"
         />
         <Button type="submit" size="icon">
           <Send className="h-4 w-4" />

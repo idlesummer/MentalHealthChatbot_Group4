@@ -1,25 +1,24 @@
 'use client'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 
 interface ChatMessageProps {
   message: {
     id: number
     user: string
-    message: string
-    time: string
+    text: string
+    ts: string
   }
 }
 
 export function ChatMessages({ children }: React.PropsWithChildren) {
   return (
-    <ScrollArea className="h-full px-5 overflow-hidden">
+    <div className="h-full px-5 overflow-y-auto">
       <div className="space-y-4 py-5">
         {children}
       </div>
-    </ScrollArea>
+    </div>
   )
 }
 
@@ -35,10 +34,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
           'rounded-lg px-3 py-2 max-w-[250px]',
           isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
         )}>
-          <p className="text-sm">{message.message}</p>
+          <p className="text-sm">{message.text}</p>
         </div>
         <span className="text-xs text-muted-foreground">
-          {message.time}
+          {message.ts}
         </span>
       </div>
     </div>

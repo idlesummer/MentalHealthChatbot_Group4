@@ -5,7 +5,7 @@ import { AppSidebar } from '@/components/app-sidebar'
 
 export default function ChatLayout({ children }: React.PropsWithChildren) {
   return (
-    <SidebarProvider style={{ '--sidebar-width': '420px' } as CSSProperties}>
+    <SidebarProvider style={{ '--sidebar-width': '440px' } as CSSProperties}>
       <AppSidebar />
       <SidebarInset className="h-screen">
         {children}

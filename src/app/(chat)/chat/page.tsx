@@ -1,4 +1,4 @@
-import { PingPongLoader } from '@/components/ping-pong-loader'
+import { PingPongLoader } from '@/components/elements/ping-pong-loader'
 import { TypographyH3, TypographyMuted } from '@/components/ui/typography'
 
 export default function ChatPage() {

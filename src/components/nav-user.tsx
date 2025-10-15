@@ -1,18 +1,7 @@
 'use client'
 
-import {
-  BadgeCheck,
-  Bell,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from 'lucide-react'
-
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar'
+import { BadgeCheck, Bell, CreditCard, LogOut, Sparkles } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,16 +17,13 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-export function NavUser({
-  user,
-}: {
+export function NavUser({ user }: {
   user: {
     name: string
     email: string
     avatar: string
   }
 }) {
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
