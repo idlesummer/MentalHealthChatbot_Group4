@@ -1,11 +1,9 @@
 'use client'
 
-import { FormEvent, useEffect, useRef, useState } from 'react'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Send } from 'lucide-react'
-import { Textarea } from '@/components/ui/textarea'
+import { useEffect, useRef, useState } from 'react'
+import { ChatHeader } from '@/components/chat-header'
+import { ChatMessage, ChatMessages } from '@/components/chat-messages'
+import { ChatInput } from '@/components/chat-input'
 
 const initialMessages = [
   { id: 1, user: 'Pebble', message: 'Hi there! I\'m Pebble, your mental health companion 🌱 How are you feeling today?', time: '9:00 AM' },
@@ -30,7 +28,6 @@ const initialMessages = [
   { id: 20, user: 'You', message: 'Thanks, Pebble. I feel lighter after talking with you.', time: '9:20 AM' },
 ]
 
-
 export default function ScrollAreaChat() {
   const [messages, setMessages] = useState(initialMessages)
   const [input, setInput] = useState('')
@@ -38,70 +35,35 @@ export default function ScrollAreaChat() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages.length])
 
-  const sendMessage = () => {
-    if (input.trim()) {
-      const newMessage = {
-        id: messages.length + 1,
-        user: 'You',
-        message: input,
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        isMe: true,
-      }
-      setMessages([...messages, newMessage])
-      setInput('')
+  const handleSend = (message: string) => {
+    if (!message.trim()) return
+    const newMessage = {
+      id: messages.length + 1,
+      user: 'You',
+      message,
+      time: new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
     }
-  }
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    sendMessage()
+    setMessages(prev => [...prev, newMessage])
+    setInput('')
   }
 
   return (
     <>
-      {/* Scrollable message area */}
-      <ScrollArea className="h-full px-5 overflow-hidden">
-        <div className="space-y-4 py-5">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex gap-3 ${msg.user === 'You' ? 'flex-row-reverse' : ''}`}
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>{msg.user[0]}</AvatarFallback>
-              </Avatar>
-              <div className={`flex flex-col gap-1 ${msg.user === 'You' ? 'items-end' : ''}`}>
-                <div
-                  className={`rounded-lg px-3 py-2 max-w-[250px] ${
-                    msg.user === 'You' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                  }`}
-                >
-                  <p className="text-sm">{msg.message}</p>
-                </div>
-                <span className="text-xs text-muted-foreground">{msg.time}</span>
-              </div>
-            </div>
-          ))}
-          <div ref={endRef} />
-        </div>
-      </ScrollArea>
-
-      {/* Input Area */}
-      <div className="border-t px-5 py-3">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px]"
-          />
-          <Button type="submit" size="icon">
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
-      </div>
+      <ChatHeader />
+      <ChatMessages>
+        {messages.map(m => <ChatMessage key={m.id} message={m} />)}
+        <div ref={endRef} />
+      </ChatMessages>
+      <ChatInput
+        value={input}
+        onChange={setInput}
+        onSend={handleSend}
+      />
     </>
   )
 }

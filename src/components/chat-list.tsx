@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Switch } from '@/components/ui/switch'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Label } from '@/components/ui/label'
 import {
   Sidebar,
@@ -11,6 +11,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
 } from '@/components/ui/sidebar'
+import { Switch } from '@/components/ui/switch'
 
 type MailItem = {
   name: string
@@ -36,43 +37,69 @@ export interface ChatListProps
 export function ChatList({ activeItem, mails, ...props }: ChatListProps) {
   return (
     <Sidebar collapsible="none" {...props}>
-      <SidebarHeader className="gap-3.5 border-b p-4">
-        <div className="flex items-center justify-between w-full">
-          <div className="text-base font-medium text-foreground">
-            {activeItem?.title}
-          </div>
-          <Label className="flex items-center gap-2 text-sm">
-            <span>Unreads</span>
-            <Switch className="shadow-none" />
-          </Label>
-        </div>
-        <SidebarInput placeholder="Search chats..." />
+      <SidebarHeader className="space-y-2 border-b p-4">
+        <ChatListHeader title={activeItem?.title} />  
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup className="px-0">
           <SidebarGroupContent>
-            {mails.map((mail) => (
-              <Link
-                href="#"
-                key={mail.email}
-                className="
-                  flex flex-col items-start gap-2 p-4 
-                  text-sm leading-tight border-b 
-                  hover:bg-sidebar-accent hover:text-sidebar-accent-foreground whitespace-nowrap last:border-b-0
-                "
-              >
-                <div className="flex items-center w-full gap-2">
-                  <span className="font-medium">{mail.name}</span>
-                  <span className="ml-auto text-xs">{mail.date}</span>
-                </div>
-                <span className="line-clamp-2 w-auto text-s whitespace-break-spaces">
-                  {mail.teaser}
-                </span>
-              </Link>
-            ))}
+            {mails.map(mail => <ChatListItem key={mail.email} mail={mail} />)}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
+  )
+}
+
+function ChatListHeader({ title }: { title: string }) {
+  return (
+    <>
+      <div className="flex items-center justify-between w-full">
+        <div className="text-base font-medium text-foreground">
+          {title}
+        </div>
+        <Label className="flex items-center gap-2 text-sm">
+          <span>Unreads</span>
+          <Switch className="shadow-none" />
+        </Label>
+      </div>
+      <SidebarInput placeholder="Search chats..." />
+    </>
+  )
+}
+
+function ChatListItem({ mail }: { mail: MailItem }) {
+  return (
+    <Link href="#" className="
+      flex items-center gap-3 p-4
+      border-b text-sm leading-snug
+      hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
+      last:border-b-0
+    ">
+      {/* Avatar */}
+      <Avatar className="h-10 w-10 shrink-0">
+        <AvatarImage 
+          src={`https://api.dicebear.com/7.x/initials/svg?seed=${mail.name}`} 
+          alt={mail.name} 
+        />
+        <AvatarFallback>{mail.name[0]}</AvatarFallback>
+      </Avatar>
+
+      {/* Text Content */}
+      <div>
+        <div className="flex items-center w-full gap-2">
+          <span className="font-medium">{mail.name}</span>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {mail.date}
+          </span>
+        </div>
+        <span className="
+          w-auto text-s text-muted-foreground 
+          line-clamp-2 whitespace-break-spaces
+        ">
+          {mail.teaser}
+        </span>
+      </div>
+    </Link>
   )
 }
