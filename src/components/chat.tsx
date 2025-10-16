@@ -4,16 +4,10 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useChatStore } from '@/lib/store/chat'
-
-type ChatMsg = {
-  id: string | number
-  user: string
-  text: string
-  ts: number
-}
+import type { Message } from '@/lib/types'
 
 type ChatMessageProps = {
-  msg: ChatMsg
+  msg: Message
   className?: string
 }
 
@@ -32,6 +26,7 @@ export function Chat({ children }: React.PropsWithChildren) {
 }
 
 export function ChatHeader() {
+  // TODO: Temporary
   const clear = useChatStore(s => s.clear)
   return (
     <div className="flex flex-row items-center py-4 px-8 space-x-4 border-b">
@@ -73,10 +68,13 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
         </Avatar>
       )}
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
-        <div className={cn('rounded-lg px-3 py-2 max-w-[50rem]', 
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-slate-200')
-        }>
-          <p className="text-sm break-words">{msg.text}</p>
+        <div className={cn(
+          'rounded-lg px-3 py-2 max-w-[50rem]', 
+          isUser 
+            ? 'bg-primary text-primary-foreground' 
+            : 'bg-muted text-foreground',
+        )}>
+          <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
         </div>
         <span className="text-xs text-muted-foreground">
           {formatTimestamp(msg.ts)}

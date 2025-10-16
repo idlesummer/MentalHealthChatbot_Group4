@@ -1,12 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-export type Message = {
-  id: string
-  user: string
-  text: string
-  ts: number
-}
+import type { Message } from '@/lib/types'
 
 type ChatState = {
   messages: Message[]
