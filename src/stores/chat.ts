@@ -15,7 +15,7 @@ type ChatState = {
   messages: Message[]
   isLoading: boolean
   hasMore: boolean
-  loadInitial: () => Promise<void>
+  loadMessages: () => Promise<void>
   loadMoreMessages: () => Promise<void> // renamed
   setMe: (id: string) => void
   send: (text: string) => Message
@@ -29,11 +29,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // State
   me: 'You',
   messages: [],
-  isLoading: false,
+  isLoading: true,
   hasMore: true,
 
   // Actions
-  loadInitial: async () => {
+  loadMessages: async () => {
     set({ isLoading: true })
     const rows = await fetchMessages({ limit: 20 })
     set({
@@ -46,7 +46,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loadMoreMessages: async () => {
     const msgs = get().messages
     const oldest = msgs[0]?.ts
-    if (!oldest) return get().loadInitial()
+    if (!oldest) return get().loadMessages()
     set({ isLoading: true })
     const older = await fetchMessages({ limit: 20, beforeTs: oldest })
     set(s => ({

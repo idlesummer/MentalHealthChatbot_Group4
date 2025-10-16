@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { ChatHeader } from '@/components/chat-header'
-import { ChatMessage, ChatMessages } from '@/components/chat-messages'
+import { ChatMessage, ChatMessages, ChatMessageSkeleton } from '@/components/chat-messages'
 import { ChatInput } from '@/components/chat-input'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatStore, useMessages } from '@/stores/chat'
@@ -11,7 +11,7 @@ export default function ScrollAreaChat() {
   // actions + state
   const send = useChatStore(s => s.send)
   // const receive = useChatStore(s => s.receive)
-  const loadInitial = useChatStore(s => s.loadInitial)
+  const loadMessages = useChatStore(s => s.loadMessages)
   const isLoading = useChatStore(s => s.isLoading)
   const storeMessages = useMessages()
 
@@ -20,7 +20,7 @@ export default function ScrollAreaChat() {
 
   // Load initial messages once
   useEffect(() => {
-    loadInitial()
+    loadMessages()
   }, [])
 
   const handleSend = (text: string) => {
@@ -42,7 +42,11 @@ export default function ScrollAreaChat() {
 
       <ChatMessages>
         {isLoading ? (
-          <p className="p-5 text-center">Loading messages...</p>
+          <>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <ChatMessageSkeleton key={i} isUser={!!(i % 2)} />
+            ))}
+          </>
         ) : (
           storeMessages.map(m => (
             <ChatMessage
@@ -59,7 +63,12 @@ export default function ScrollAreaChat() {
         <div ref={endRef} />
       </ChatMessages>
 
-      <ChatInput value={input} onChange={setInput} onSend={handleSend} />
+      <ChatInput 
+        value={input} 
+        onChange={setInput} 
+        onSend={handleSend} 
+        disabled={isLoading}
+      />
     </>
   )
 }

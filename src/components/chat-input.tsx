@@ -9,9 +9,10 @@ interface ChatInputProps {
   value: string
   onChange: (value: string) => void
   onSend: (message: string) => void
+  disabled: boolean
 }
 
-export function ChatInput({ value, onChange, onSend }: ChatInputProps) {
+export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!value.trim()) return
@@ -26,6 +27,7 @@ export function ChatInput({ value, onChange, onSend }: ChatInputProps) {
           onChange={(e) => onChange(e.target.value)}
           placeholder="Type a message..."
           className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px]"
+          disabled={disabled}
         />
         <Button type="submit" size="icon">
           <Send className="h-4 w-4" />
