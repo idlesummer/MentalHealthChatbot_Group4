@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { ChatHeader } from '@/components/chat-header'
-import { ChatMessage, ChatMessages, ChatMessageSkeleton } from '@/components/chat-messages'
+import { ChatMessage, ChatMessages, ChatMessageSkeletonList } from '@/components/chat-messages'
 import { ChatInput } from '@/components/chat-input'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatStore, useMessages } from '@/stores/chat'
@@ -39,12 +39,9 @@ export default function ScrollAreaChat() {
   return (
     <>
       <ChatHeader />
-
       <ChatMessages>
         {isLoading ? (
-          Array.from({ length: 8 }).map((_, i) => (
-            <ChatMessageSkeleton key={i} isUser={!!(i % 2)} />
-          ))
+          <ChatMessageSkeletonList count={8} />
         ) : (
           <>
             {storeMessages.map(m => (
@@ -62,7 +59,6 @@ export default function ScrollAreaChat() {
           </>
         )}
       </ChatMessages>
-
       <ChatInput 
         value={input} 
         onChange={setInput} 
