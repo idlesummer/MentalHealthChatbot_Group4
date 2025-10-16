@@ -1,11 +1,8 @@
 'use client'
+
 import { useState } from 'react'
-import { Send } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
-import { cn } from '@/lib/utils'
+import { Chat, ChatHeader, ChatMessages, ChatMessage, ChatInput } from '@/components/chat'
 
 const initialMessages = [
   { id: 1, user: 'Alex', message: 'Hey team! How\'s the project going?', time: '10:00 AM' },
@@ -23,115 +20,33 @@ const initialMessages = [
 export default function ScrollAreaChat() {
   const [messages, setMessages] = useState(initialMessages)
   const [input, setInput] = useState('')
-  const endRef = useScrollToBottom(messages.length)
+  const scrollRef = useScrollToBottom(messages.length)
 
   const sendMessage = () => {
-    if (input.trim()) {
-      const newMessage = {
-        id: messages.length + 1,
-        user: 'You',
-        message: input,
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        isMe: true,
-      }
-      setMessages([...messages, newMessage])
-      setInput('')
+    if (!input.trim()) return
+    const newMessage = {
+      id: messages.length + 1,
+      user: 'You',
+      message: input,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      isMe: true,
     }
+    setMessages([...messages, newMessage])
+    setInput('')
   }
 
-  const handleSend = (e) => {
-    e.preventDefault()
+  const handleSend = () => {
     sendMessage()
   }
 
   return (
-    <Chat>
-      
-      {/* Chat Header */}
+    <Chat>      
       <ChatHeader />
-
-      {/* Chat Message */}
-      <div className="flex-1 h-full overflow-y-auto px-4" ref={endRef}>
-        <div className="space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={cn('flex gap-3', msg.user === 'You' && 'flex-row-reverse')}
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>{msg.user[0]}</AvatarFallback>
-              </Avatar>
-              <div className={`flex flex-col gap-1 ${msg.user === 'You' ? 'items-end' : ''}`}>
-                <div className={cn(
-                  'rounded-lg px-3 py-2 max-w-[100rem]',
-                  msg.user === 'You' ? 'bg-primary text-primary-foreground' : 'bg-slate-200',
-                )}>
-                  <p className="text-md">{msg.message}</p>
-                </div>
-                <span className="text-xs text-muted-foreground">{msg.time}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Chat Input */}
-      <div className="p-0">
-        <div className="border-t p-3 w-full">
-          <form
-            onSubmit={handleSend}
-            className="flex gap-2"
-          >
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1"
-            />
-            <Button type="submit" size="icon">
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
-      </div>
+      <ChatMessages>
+        {messages.map(m => <ChatMessage key={m.id} msg={m} />)}
+        <div ref={scrollRef} />
+      </ChatMessages>
+      <ChatInput value={input} onChange={setInput} onSubmit={handleSend} />
     </Chat>
   )
-}
-
-function Chat({ children }: React.PropsWithChildren) {
-  return (
-    <div className="flex flex-col mx-auto h-full max-w-5xl bg-background shadow-sm rounded-2xl">
-      {children}
-    </div>
-  )
-}
-
-function ChatHeader() {
-  return (
-    <div className="flex flex-row items-center py-4 px-8 space-x-4 border-b">
-      <Avatar className="h-10 w-10">
-        <AvatarFallback>P</AvatarFallback>
-      </Avatar>
-      <div className="min-w-0">
-        <h1 className="truncate text-base font-semibold">Pebbles</h1>
-        <p className="text-xs text-muted-foreground">Online</p>
-      </div>
-    </div>
-  )
-}
-
-// function ChatMessages({ children, ref }: React.PropsWithChildren) {
-//   return (
-//     <div className="flex-1 h-full overflow-y-auto px-4" ref={ref}>
-//       {children}
-//     </div>
-//   )
-// }
-
-function ChatMessage() {
-
-}
-
-function ChatInput() {
-
 }
