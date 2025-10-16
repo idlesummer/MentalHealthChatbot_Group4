@@ -48,19 +48,21 @@ export default function ScrollAreaChat() {
             ))}
           </>
         ) : (
-          storeMessages.map(m => (
-            <ChatMessage
-              key={m.id}
-              message={{
-                id: m.id,
-                user: m.from,
-                text: m.text,
-                ts: fmtTime(m.ts),
-              }}
-            />
-          ))
+          <>
+            {storeMessages.map(m => (
+              <ChatMessage
+                key={m.id}
+                message={{
+                  id: m.id,
+                  user: m.from,
+                  text: m.text,
+                  ts: fmtTime(m.ts),
+                }}
+              />
+            ))}
+            <div ref={endRef} />
+          </>
         )}
-        <div ref={endRef} />
       </ChatMessages>
 
       <ChatInput 
