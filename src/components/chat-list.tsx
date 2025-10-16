@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Label } from '@/components/ui/label'
 import {
   Sidebar,
   SidebarHeader,
@@ -11,7 +10,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
 } from '@/components/ui/sidebar'
-import { Switch } from '@/components/ui/switch'
+import { TypographyH3 } from '@/components/ui/typography'
 
 type MailItem = {
   name: string
@@ -37,7 +36,7 @@ export interface ChatListProps
 export function ChatList({ activeItem, mails, ...props }: ChatListProps) {
   return (
     <Sidebar collapsible="none" className="bg-background" {...props}>
-      <SidebarHeader className="space-y-2 border-b p-4">
+      <SidebarHeader className="space-y-2 p-6">
         <ChatListHeader title={activeItem?.title} />  
       </SidebarHeader>
       <SidebarContent>
@@ -55,13 +54,9 @@ function ChatListHeader({ title }: { title: string }) {
   return (
     <>
       <div className="flex items-center justify-between w-full">
-        <div className="text-base font-medium text-foreground">
+        <TypographyH3 className="font-medium text-foreground">
           {title}
-        </div>
-        <Label className="flex items-center gap-2 text-sm">
-          <span>Unreads</span>
-          <Switch className="shadow-none" />
-        </Label>
+        </TypographyH3>
       </div>
       <SidebarInput placeholder="Search chats..." />
     </>

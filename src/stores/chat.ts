@@ -23,7 +23,7 @@ type ChatState = {
   clear: () => void
 }
 
-const rid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`
+const rid = () => crypto.randomUUID()
 
 export const useChatStore = create<ChatState>((set, get) => ({
   // State
