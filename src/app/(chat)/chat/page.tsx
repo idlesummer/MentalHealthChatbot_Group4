@@ -10,7 +10,7 @@ import {
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatStore } from '@/lib/store/chat'
 
-export default function ScrollAreaChat() {
+export default function ChatPage() {
   const messages   = useChatStore(s => s.messages)
   const input      = useChatStore(s => s.input)
   const setInput   = useChatStore(s => s.setInput)
