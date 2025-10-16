@@ -64,7 +64,7 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
       )}
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
         <div className={cn('rounded-lg px-3 py-2 max-w-[50rem]', isUser ? 'bg-primary text-primary-foreground' : 'bg-slate-200')}>
-          <p className="text-md">{msg.message}</p>
+          <p className="text-sm break-words">{msg.message}</p>
         </div>
         <span className="text-xs text-muted-foreground">{msg.time}</span>
       </div>

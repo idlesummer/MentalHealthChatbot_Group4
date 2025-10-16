@@ -78,7 +78,7 @@ const initialMessages = [
 export default function ScrollAreaChat() {
   const [messages, setMessages] = useState(initialMessages)
   const [input, setInput] = useState('')
-  const endRef = useScrollToBottom(messages.length)
+  const scrollRef = useScrollToBottom(messages.length)
 
   const sendMessage = () => {
     if (!input.trim()) return
@@ -102,7 +102,7 @@ export default function ScrollAreaChat() {
       <ChatHeader />
       <ChatMessages>
         {messages.map(m => <ChatMessage key={m.id} msg={m} />)}
-        <div ref={endRef} />
+        <div ref={scrollRef} />
       </ChatMessages>
       <ChatInput value={input} onChange={setInput} onSubmit={handleSend} />
     </Chat>
@@ -307,4 +307,16 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+
+------------------------------
+ FILE:  queries.ts
+ PATH:  lib\db\queries.ts
+------------------------------
+
+
+------------------------------
+ FILE:  chat.ts
+ PATH:  lib\store\chat.ts
+------------------------------
 
