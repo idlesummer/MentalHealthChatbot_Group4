@@ -5,7 +5,7 @@ import {
   ChatHeader, 
   ChatMessages, 
   ChatMessage, 
-  ChatInput 
+  ChatInput,
 } from '@/components/chat'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatStore } from '@/lib/store/chat'

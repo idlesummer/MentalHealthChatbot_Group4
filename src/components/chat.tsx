@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn, formatTimestamp } from '@/lib/utils'
 import { Send, Trash2 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -8,8 +8,8 @@ import { useChatStore } from '@/lib/store/chat'
 type ChatMsg = {
   id: string | number
   user: string
-  message: string
-  time: string
+  text: string
+  ts: number
 }
 
 type ChatMessageProps = {
@@ -56,7 +56,7 @@ export function ChatHeader() {
 
 export function ChatMessages({ children }: React.PropsWithChildren) {
   return (
-    <div className="flex-1 h-full overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 h-full overflow-y-auto scroll-smooth p-4 space-y-4">
       {children}
     </div>
   )
@@ -76,9 +76,11 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
         <div className={cn('rounded-lg px-3 py-2 max-w-[50rem]', 
           isUser ? 'bg-primary text-primary-foreground' : 'bg-slate-200')
         }>
-          <p className="text-sm break-words">{msg.message}</p>
+          <p className="text-sm break-words">{msg.text}</p>
         </div>
-        <span className="text-xs text-muted-foreground">{msg.time}</span>
+        <span className="text-xs text-muted-foreground">
+          {formatTimestamp(msg.ts)}
+        </span>
       </div>
     </div>
   )
