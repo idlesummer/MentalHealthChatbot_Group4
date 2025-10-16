@@ -34,7 +34,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { TypographyH1, TypographyP } from '@/components/ui/typography'
 
-export default function NotFound() {
+export default function NotFoundPage() {
   return (
     <div className="flex flex-col items-center justify-center h-screen text-center space-y-6">
       <TypographyH1>404 - Page Not Found</TypographyH1>
@@ -57,13 +57,13 @@ export default function NotFound() {
 import { redirect } from 'next/navigation'
 
 export default function Home() {
-  redirect('/chats')
+  redirect('/chat')
 }
 
 
 ------------------------------
  FILE:  layout.tsx
- PATH:  app\(chat)\chats\layout.tsx
+ PATH:  app\(chat)\chat\layout.tsx
 ------------------------------
 
 import { CSSProperties } from 'react'
@@ -73,7 +73,7 @@ import { AppSidebar } from '@/components/app-sidebar'
 
 export default function ChatLayout({ children }: React.PropsWithChildren) {
   return (
-    <SidebarProvider style={{ '--sidebar-width': '420px' } as CSSProperties}>
+    <SidebarProvider style={{ '--sidebar-width': '440px' } as CSSProperties}>
       <AppSidebar />
       <SidebarInset className="h-screen">
         {children}
@@ -85,10 +85,10 @@ export default function ChatLayout({ children }: React.PropsWithChildren) {
 
 ------------------------------
  FILE:  page.tsx
- PATH:  app\(chat)\chats\page.tsx
+ PATH:  app\(chat)\chat\page.tsx
 ------------------------------
 
-import { PingPongLoader } from '@/components/ping-pong-loader'
+import { PingPongLoader } from '@/components/elements/ping-pong-loader'
 import { TypographyH3, TypographyMuted } from '@/components/ui/typography'
 
 export default function ChatPage() {
@@ -110,7 +110,7 @@ export default function ChatPage() {
 
 ------------------------------
  FILE:  page.tsx
- PATH:  app\(chat)\chats\[id]\page.tsx
+ PATH:  app\(chat)\chat\[id]\page.tsx
 ------------------------------
 
 
@@ -345,9 +345,10 @@ interface ChatInputProps {
   value: string
   onChange: (value: string) => void
   onSend: (message: string) => void
+  disabled: boolean
 }
 
-export function ChatInput({ value, onChange, onSend }: ChatInputProps) {
+export function ChatInput({ value, onChange, onSend, disabled }: ChatInputProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!value.trim()) return
@@ -355,13 +356,14 @@ export function ChatInput({ value, onChange, onSend }: ChatInputProps) {
   }
 
   return (
-    <div className="border-t px-5 py-3">
+    <div className="border-t px-6 py-3">
       <form onSubmit={handleSubmit} className="flex gap-2">
         <Textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Type a message..."
           className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px]"
+          disabled={disabled}
         />
         <Button type="submit" size="icon">
           <Send className="h-4 w-4" />
@@ -415,7 +417,7 @@ export interface ChatListProps
 
 export function ChatList({ activeItem, mails, ...props }: ChatListProps) {
   return (
-    <Sidebar collapsible="none" {...props}>
+    <Sidebar collapsible="none" className="bg-background" {...props}>
       <SidebarHeader className="space-y-2 border-b p-4">
         <ChatListHeader title={activeItem?.title} />  
       </SidebarHeader>
@@ -449,9 +451,9 @@ function ChatListHeader({ title }: { title: string }) {
 
 function ChatListItem({ mail }: { mail: MailItem }) {
   return (
-    <Link href="#" className="
+    <Link href="/chat/some-user-id" className="
       flex items-center gap-3 p-4
-      border-b text-sm leading-snug
+      text-sm leading-snug
       hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
       last:border-b-0
     ">
@@ -474,7 +476,7 @@ function ChatListItem({ mail }: { mail: MailItem }) {
         </div>
         <span className="
           w-auto text-s text-muted-foreground 
-          line-clamp-2 whitespace-break-spaces
+          line-clamp-1 whitespace-break-spaces
         ">
           {mail.teaser}
         </span>
@@ -492,25 +494,25 @@ function ChatListItem({ mail }: { mail: MailItem }) {
 'use client'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
 interface ChatMessageProps {
   message: {
-    id: number
+    id: string
     user: string
-    message: string
-    time: string
+    text: string
+    ts: string
   }
 }
 
 export function ChatMessages({ children }: React.PropsWithChildren) {
   return (
-    <ScrollArea className="h-full px-5 overflow-hidden">
+    <div className="h-full px-5 overflow-y-auto">
       <div className="space-y-4 py-5">
         {children}
       </div>
-    </ScrollArea>
+    </div>
   )
 }
 
@@ -518,21 +520,65 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.user === 'You'
   return (
     <div className={cn('flex gap-3', isUser && 'flex-row-reverse')}>
+
+      {/* Avatar */}
       <Avatar className="h-8 w-8">
         <AvatarFallback>{message.user[0]}</AvatarFallback>
       </Avatar>
+
+      {/* Text message */}
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
         <div className={cn(
-          'rounded-lg px-3 py-2 max-w-[250px]',
+          'rounded-lg px-3 py-2 max-w-75',
           isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
         )}>
-          <p className="text-sm">{message.message}</p>
+          <p className="text-sm">{message.text}</p>
         </div>
+
+        {/* Timestamp */}
         <span className="text-xs text-muted-foreground">
-          {message.time}
+          {message.ts}
         </span>
       </div>
     </div>
+  )
+}
+
+export function ChatMessageSkeleton({ isUser = false }: { isUser?: boolean }) {
+  return (
+    <div className={cn('flex gap-3', isUser && 'flex-row-reverse')}>
+      {/* Avatar */}
+      <Avatar className="h-8 w-8">
+        <AvatarFallback className="bg-muted text-muted-foreground">
+          <Skeleton className="h-8 w-8 rounded-full" />
+        </AvatarFallback>
+      </Avatar>
+
+      {/* Text message */}
+      <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
+        <Skeleton
+          className={cn(
+            'rounded-lg px-3 py-2 w-75 space-y-1',
+            isUser ? 'bg-primary/10' : 'bg-muted/50',
+          )}
+        >
+          <Skeleton className="h-4 w-[80%]" />
+          <Skeleton className="h-4 w-[60%]" />
+          <Skeleton className="h-4 w-[70%]" />
+        </Skeleton>
+
+        {/* Timestamp skeleton */}
+        <Skeleton className="h-3.5 w-12" />
+      </div>
+    </div>
+  )
+}
+
+export function ChatMessageSkeletonList({ count } : { count: number }) {
+  return (
+    Array.from({ length: count }).map((_, i) => (
+      <ChatMessageSkeleton key={i} isUser={!!(i % 2)} />
+    ))
   )
 }
 
@@ -803,19 +849,8 @@ export function NavMain({ data, activeItem, setActiveItem, setMails, ...props }:
 
 'use client'
 
-import {
-  BadgeCheck,
-  Bell,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from 'lucide-react'
-
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar'
+import { BadgeCheck, Bell, CreditCard, LogOut, Sparkles } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -831,16 +866,13 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-export function NavUser({
-  user,
-}: {
+export function NavUser({ user }: {
   user: {
     name: string
     email: string
     avatar: string
   }
 }) {
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -914,7 +946,7 @@ export function NavUser({
 
 ------------------------------
  FILE:  ping-pong-loader.tsx
- PATH:  components\ping-pong-loader.tsx
+ PATH:  components\elements\ping-pong-loader.tsx
 ------------------------------
 
 'use client'
@@ -976,6 +1008,26 @@ export function useIsMobile() {
 
 
 ------------------------------
+ FILE:  use-scroll-to-bottom.ts
+ PATH:  hooks\use-scroll-to-bottom.ts
+------------------------------
+
+'use client'
+
+import { useEffect, useRef } from 'react'
+
+export function useScrollToBottom(trigger?: unknown) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [trigger])
+
+  return ref
+}
+
+
+------------------------------
  FILE:  utils.ts
  PATH:  lib\utils.ts
 ------------------------------
@@ -986,4 +1038,171 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+
+------------------------------
+ FILE:  queries.ts
+ PATH:  lib\db\queries.ts
+------------------------------
+
+export type DbMessage = { 
+  id: string
+  from: string
+  text: string
+  ts: number 
+}
+
+const FAKE_ROWS: DbMessage[] = [
+  { id: '1',  from: 'Pebble', text: 'Hi there! I\'m Pebble, your mental health companion ðŸŒ± How are you feeling today?', ts: 1760490000000 },
+  { id: '2',  from: 'You',    text: 'Hey Pebble. Honestly, I\'ve been feeling really stressed lately.', ts: 1760490060000 },
+  { id: '3',  from: 'Pebble', text: 'I\'m really glad you reached out. Stress can be heavy â€” what\'s been weighing on your mind the most?', ts: 1760490120000 },
+  { id: '4',  from: 'You',    text: 'Mostly school and deadlines. It feels like everything\'s piling up.', ts: 1760490180000 },
+  { id: '5',  from: 'Pebble', text: 'That sounds overwhelming ðŸ˜” When things stack up like that, our minds can feel cluttered. Have you had any breaks recently?', ts: 1760490240000 },
+  { id: '6',  from: 'You',    text: 'Not really. I just keep pushing through, even when I\'m exhausted.', ts: 1760490300000 },
+  { id: '7',  from: 'Pebble', text: 'That takes a lot of strength. Sometimes resting isn\'t giving up â€” it\'s recharging so you can keep going. What helps you relax, even a little?', ts: 1760490360000 },
+  { id: '8',  from: 'You',    text: 'I usually listen to music or draw when I can.', ts: 1760490420000 },
+  { id: '9',  from: 'Pebble', text: 'Those are wonderful outlets ðŸŽ¨ðŸŽ§ Creative expression can really help release built-up tension. What kind of music do you turn to when you\'re stressed?', ts: 1760490480000 },
+  { id: '10', from: 'You',    text: 'Mostly calm instrumentals or lofi. It helps me focus.', ts: 1760490540000 },
+  { id: '11', from: 'Pebble', text: 'That\'s a great choice. Music like that can help slow your breathing and calm your thoughts. Would you like to try a short grounding exercise together?', ts: 1760490600000 },
+  { id: '12', from: 'You',    text: 'Sure, I\'d like that.', ts: 1760490660000 },
+  { id: '13', from: 'Pebble', text: 'Alright ðŸŒ¿ Try to notice your breathing. Inhale deeply through your noseâ€¦ hold for a momentâ€¦ and exhale slowly through your mouth. Let your shoulders relax as you do.', ts: 1760490720000 },
+  { id: '14', from: 'You',    text: 'That actually helped a bit.', ts: 1760490840000 },
+  { id: '15', from: 'Pebble', text: 'I\'m really glad to hear that ðŸ˜Š Sometimes small moments of calm can remind us that we can still find peace, even in busy times.', ts: 1760490900000 },
+  { id: '16', from: 'You',    text: 'Yeahâ€¦ I guess I just forget to pause sometimes.', ts: 1760490960000 },
+  { id: '17', from: 'Pebble', text: 'That\'s completely normal. You\'re doing your best â€” and that\'s enough. Maybe we can set a tiny reminder for short breaks during your study sessions?', ts: 1760491020000 },
+  { id: '18', from: 'You',    text: 'That might actually help me a lot.', ts: 1760491080000 },
+  { id: '19', from: 'Pebble', text: 'Great! Try starting with a 5-minute pause every hour â€” stretch, breathe, hydrate. You\'ll be surprised how much it helps your focus.', ts: 1760491140000 },
+  { id: '20', from: 'You',    text: 'Thanks, Pebble. I feel lighter after talking with you.', ts: 1760491200000 },
+]
+
+export async function fetchMessages(opts?: { limit?: number; beforeTs?: number }) {
+  const { limit = 20, beforeTs } = opts ?? {}
+
+  // Simulate network latency
+  await new Promise(r => setTimeout(r, 500))
+
+  let rows = FAKE_ROWS
+  if (beforeTs) rows = rows.filter(m => m.ts < beforeTs)
+  rows = rows.sort((a, b) => a.ts - b.ts) // stable order coming from "DB"
+
+  return rows.slice(-limit) // last N
+}
+
+
+------------------------------
+ FILE:  auth.ts
+ PATH:  stores\auth.ts
+------------------------------
+
+'use client'
+
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+type AuthState = {
+  userId: string | null
+  setUser: (id: string | null) => void
+  signOut: () => void
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      userId: null,
+      setUser: (id) => set({ userId: id }),
+      signOut: () => set({ userId: null }),
+    }),
+    { name: 'auth-store' },
+  ),
+)
+
+
+------------------------------
+ FILE:  chat.ts
+ PATH:  stores\chat.ts
+------------------------------
+
+'use client'
+
+import { create } from 'zustand'
+import { fetchMessages } from '@/lib/db/queries'
+
+export type Message = {
+  id: string
+  from: string
+  text: string
+  ts: number
+}
+
+type ChatState = {
+  me: string
+  messages: Message[]
+  isLoading: boolean
+  hasMore: boolean
+  loadMessages: () => Promise<void>
+  loadMoreMessages: () => Promise<void> // renamed
+  setMe: (id: string) => void
+  send: (text: string) => Message
+  receive: (from: string, text: string, id?: string, ts?: number) => Message
+  clear: () => void
+}
+
+const rid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+export const useChatStore = create<ChatState>((set, get) => ({
+  // State
+  me: 'You',
+  messages: [],
+  isLoading: true,
+  hasMore: true,
+
+  // Actions
+  loadMessages: async () => {
+    set({ isLoading: true })
+    const rows = await fetchMessages({ limit: 20 })
+    set({
+      messages: rows,
+      isLoading: false,
+      hasMore: rows.length >= 20,
+    })
+  },
+
+  loadMoreMessages: async () => {
+    const msgs = get().messages
+    const oldest = msgs[0]?.ts
+    if (!oldest) return get().loadMessages()
+    set({ isLoading: true })
+    const older = await fetchMessages({ limit: 20, beforeTs: oldest })
+    set(s => ({
+      messages: [...older, ...s.messages],
+      isLoading: false,
+      hasMore: older.length >= 20,
+    }))
+  },
+
+  setMe: id => set({ me: id }),
+
+  send: text => {
+    const me = get().me
+    if (!me) throw new Error('call setMe first')
+    const message = { id: rid(), from: me, text, ts: Date.now() }
+    set(s => ({ messages: [...s.messages, message] }))
+    return message
+  },
+
+  receive: (from, text, id = rid(), ts = Date.now()) => {
+    const message = { id, from, text, ts }
+    set(s => {
+      if (s.messages.some(m => m.id === id)) return s
+      return { messages: [...s.messages, message] }
+    })
+    return message
+  },
+
+  clear: () => set({ messages: [] }),
+}))
+
+// Selectors
+export const useMe = () => useChatStore(s => s.me)
+export const useMessages = () => useChatStore(s => s.messages)
 

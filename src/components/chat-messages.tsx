@@ -39,7 +39,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
           'rounded-lg px-3 py-2 max-w-75',
           isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
         )}>
-          <p className="text-sm">{message.text}</p>
+          {/* TODO: Allow text to display as-is */}
+          <p className="text-sm whitespace-pre-wrap break-words">
+            {message.text}
+          </p>
         </div>
 
         {/* Timestamp */}
