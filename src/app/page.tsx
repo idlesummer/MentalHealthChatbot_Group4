@@ -1,3 +1,5 @@
-export default function HomePage() {
-  
+import { redirect } from 'next/navigation'
+
+export default function Home() {
+  redirect('/chat')
 }
