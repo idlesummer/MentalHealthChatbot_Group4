@@ -34,15 +34,15 @@ export function ChatMessage({ message }: ChatMessageProps) {
       </Avatar>
 
       {/* Text message */}
-      <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
+      <div className={cn('flex flex-col gap-1 items-start', isUser && 'items-end')}>
         <div className={cn(
-          'rounded-lg px-3 py-2 max-w-75',
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
+          'inline-block rounded-lg px-3 py-2 w-[50%]',
+          isUser 
+            ? 'bg-primary text-primary-foreground' 
+            : 'bg-muted text-foreground',
         )}>
           {/* TODO: Allow text to display as-is */}
-          <p className="text-sm whitespace-pre-wrap break-words">
-            {message.text}
-          </p>
+          <p className="text-sm break-words">{message.text}</p>
         </div>
 
         {/* Timestamp */}
