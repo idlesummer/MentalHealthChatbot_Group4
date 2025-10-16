@@ -72,7 +72,7 @@ function ChatListItem({ mail }: { mail: MailItem }) {
   return (
     <Link href="/chat/some-user-id" className="
       flex items-center gap-3 p-4
-      border-b text-sm leading-snug
+      text-sm leading-snug
       hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
       last:border-b-0
     ">
@@ -95,7 +95,7 @@ function ChatListItem({ mail }: { mail: MailItem }) {
         </div>
         <span className="
           w-auto text-s text-muted-foreground 
-          line-clamp-2 whitespace-break-spaces
+          line-clamp-1 whitespace-break-spaces
         ">
           {mail.teaser}
         </span>

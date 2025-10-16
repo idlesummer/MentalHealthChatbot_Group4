@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 interface ChatMessageProps {
   message: {
-    id: number
+    id: string
     user: string
     text: string
     ts: string

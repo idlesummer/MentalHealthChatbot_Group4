@@ -25,7 +25,7 @@ export function ChatInput({ value, onChange, onSend }: ChatInputProps) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px] rounded-full"
+          className="flex-1 resize-none max-h-40 overflow-y-auto min-h-[36px]"
         />
         <Button type="submit" size="icon">
           <Send className="h-4 w-4" />

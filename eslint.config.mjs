@@ -33,6 +33,7 @@ const eslintConfig = [
       'object-curly-spacing': ['warn', 'always'],         // spacing / formatting consistency
       quotes: ['warn', 'single', { avoidEscape: true }],  // Single quotes for JS/TS
       semi: ['warn', 'never'],                            // No semicolons
+      'react-hooks/exhaustive-deps': 'off',
     },
   },
 ]
