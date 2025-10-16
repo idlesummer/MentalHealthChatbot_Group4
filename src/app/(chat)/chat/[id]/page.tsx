@@ -40,9 +40,7 @@ export default function ScrollAreaChat() {
     <>
       <ChatHeader />
       <ChatMessages>
-        {isLoading ? (
-          <ChatMessageSkeletonList count={8} />
-        ) : (
+        {isLoading ? <ChatMessageSkeletonList count={8} /> : (
           <>
             {storeMessages.map(m => (
               <ChatMessage

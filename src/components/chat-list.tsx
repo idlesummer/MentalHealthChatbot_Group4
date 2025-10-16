@@ -10,7 +10,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
 } from '@/components/ui/sidebar'
-import { TypographyH3 } from '@/components/ui/typography'
+import { TypographyH4 } from '@/components/ui/typography'
 
 type MailItem = {
   name: string
@@ -36,7 +36,7 @@ export interface ChatListProps
 export function ChatList({ activeItem, mails, ...props }: ChatListProps) {
   return (
     <Sidebar collapsible="none" className="bg-background" {...props}>
-      <SidebarHeader className="space-y-2 p-6">
+      <SidebarHeader className="p-5 space-y-2">
         <ChatListHeader title={activeItem?.title} />  
       </SidebarHeader>
       <SidebarContent>
@@ -54,9 +54,9 @@ function ChatListHeader({ title }: { title: string }) {
   return (
     <>
       <div className="flex items-center justify-between w-full">
-        <TypographyH3 className="font-medium text-foreground">
+        <TypographyH4 className="font-medium text-foreground">
           {title}
-        </TypographyH3>
+        </TypographyH4>
       </div>
       <SidebarInput placeholder="Search chats..." />
     </>
@@ -66,7 +66,7 @@ function ChatListHeader({ title }: { title: string }) {
 function ChatListItem({ mail }: { mail: MailItem }) {
   return (
     <Link href="/chat/some-user-id" className="
-      flex items-center gap-3 p-4
+      flex items-center gap-3 py-4 px-5
       text-sm leading-snug
       hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
       last:border-b-0
