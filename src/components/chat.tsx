@@ -1,8 +1,9 @@
 import { cn } from '@/lib/utils'
-import { Send } from 'lucide-react'
+import { Send, Trash2 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useChatStore } from '@/lib/store/chat'
 
 type ChatMsg = {
   id: string | number
@@ -31,6 +32,7 @@ export function Chat({ children }: React.PropsWithChildren) {
 }
 
 export function ChatHeader() {
+  const clear = useChatStore(s => s.clear)
   return (
     <div className="flex flex-row items-center py-4 px-8 space-x-4 border-b">
       <Avatar className="h-10 w-10">
@@ -40,6 +42,14 @@ export function ChatHeader() {
         <h1 className="truncate text-base font-semibold">Pebbles</h1>
         <p className="text-xs text-muted-foreground">Online</p>
       </div>
+      <Button 
+        variant="secondary"
+        size="icon"
+        onClick={clear}
+        className="ml-auto rounded-full" 
+      >
+        <Trash2 />
+      </Button>
     </div>
   )
 }
@@ -63,7 +73,9 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
         </Avatar>
       )}
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
-        <div className={cn('rounded-lg px-3 py-2 max-w-[50rem]', isUser ? 'bg-primary text-primary-foreground' : 'bg-slate-200')}>
+        <div className={cn('rounded-lg px-3 py-2 max-w-[50rem]', 
+          isUser ? 'bg-primary text-primary-foreground' : 'bg-slate-200')
+        }>
           <p className="text-sm break-words">{msg.message}</p>
         </div>
         <span className="text-xs text-muted-foreground">{msg.time}</span>
@@ -77,7 +89,7 @@ export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
     <div className="p-0">
       <div className="border-t p-3 w-full">
         <form
-          onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+          onSubmit={e => { e.preventDefault(); onSubmit() }}
           className="flex gap-2"
         >
           <Input

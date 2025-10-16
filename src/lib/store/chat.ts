@@ -31,7 +31,10 @@ export const useChatStore = create<ChatState>()(
         const msg: Message = { id: crypto.randomUUID(), user, message: text, time: now }
         set({ messages: [...get().messages, msg], input: '' })
       },
-      clear: () => set({ messages: [], input: '' }),
+      clear: () => {
+        set({ messages: [], input: '' })
+        localStorage.removeItem('chat-store')
+      },
     }),
     { name: 'chat-store' },
   ),

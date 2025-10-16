@@ -38,13 +38,22 @@ export default function Home() {
 
 
 ------------------------------
+ FILE:  actions.ts
+ PATH:  app\(chat)\chat\actions.ts
+------------------------------
+
+'use server'
+
+
+
+------------------------------
  FILE:  layout.tsx
  PATH:  app\(chat)\chat\layout.tsx
 ------------------------------
 
 export default function ChatLayout({ children }: React.PropsWithChildren) {
   return (
-    <div className="h-screen bg-muted p-4">
+    <div className="h-screen bg-muted overflow-hidden p-4">
       {children}
     </div>
   )
@@ -58,43 +67,20 @@ export default function ChatLayout({ children }: React.PropsWithChildren) {
 
 'use client'
 
-import { useState } from 'react'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { Chat, ChatHeader, ChatMessages, ChatMessage, ChatInput } from '@/components/chat'
-
-const initialMessages = [
-  { id: 1, user: 'Alex', message: 'Hey team! How\'s the project going?', time: '10:00 AM' },
-  { id: 2, user: 'You', message: 'Going great! Just finished the API integration', time: '10:02 AM' },
-  { id: 3, user: 'Sarah', message: 'Nice work! I\'m wrapping up the UI components', time: '10:03 AM' },
-  { id: 4, user: 'You', message: 'Perfect, should we sync up later today?', time: '10:05 AM' },
-  { id: 5, user: 'Alex', message: 'Sounds good. How about 2 PM?', time: '10:06 AM' },
-  { id: 6, user: 'Sarah', message: 'Works for me! ðŸ‘', time: '10:07 AM' },
-  { id: 7, user: 'You', message: 'Great, see you both then', time: '10:08 AM' },
-  { id: 8, user: 'Alex', message: 'Just pushed my changes to the staging branch', time: '11:30 AM' },
-  { id: 9, user: 'Sarah', message: 'Reviewing now...', time: '11:32 AM' },
-  { id: 10, user: 'You', message: 'I\'ll test it after lunch', time: '11:35 AM' },
-]
+import { useChatStore } from '@/lib/store/chat'
 
 export default function ScrollAreaChat() {
-  const [messages, setMessages] = useState(initialMessages)
-  const [input, setInput] = useState('')
-  const scrollRef = useScrollToBottom(messages.length)
-
-  const sendMessage = () => {
-    if (!input.trim()) return
-    const newMessage = {
-      id: messages.length + 1,
-      user: 'You',
-      message: input,
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      isMe: true,
-    }
-    setMessages([...messages, newMessage])
-    setInput('')
-  }
+  const messages   = useChatStore(s => s.messages)
+  const input      = useChatStore(s => s.input)
+  const setInput   = useChatStore(s => s.setInput)
+  const addMessage = useChatStore(s => s.addMessage)
+  const scrollRef  = useScrollToBottom(messages.length)
 
   const handleSend = () => {
-    sendMessage()
+    if (!input.trim()) return
+    addMessage(input, 'You')
   }
 
   return (
@@ -181,7 +167,7 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
       )}
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
         <div className={cn('rounded-lg px-3 py-2 max-w-[50rem]', isUser ? 'bg-primary text-primary-foreground' : 'bg-slate-200')}>
-          <p className="text-md">{msg.message}</p>
+          <p className="text-sm break-words">{msg.message}</p>
         </div>
         <span className="text-xs text-muted-foreground">{msg.time}</span>
       </div>
@@ -319,4 +305,43 @@ export function cn(...inputs: ClassValue[]) {
  FILE:  chat.ts
  PATH:  lib\store\chat.ts
 ------------------------------
+
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+export type Message = {
+  id: string
+  user: string
+  message: string
+  time: string
+}
+
+type ChatState = {
+  messages: Message[]
+  input: string
+  setInput: (v: string) => void
+  addMessage: (text: string, from?: string) => void
+  clear: () => void
+}
+
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set, get) => ({
+      messages: [
+        { id: '1', user: 'Alex',  message: 'Hey team! How\'s the project going?', time: '10:00 AM' },
+        { id: '2', user: 'You',   message: 'Going great! Just finished the API integration', time: '10:02 AM' },
+        { id: '3', user: 'Sarah', message: 'Nice work! I\'m wrapping up the UI components', time: '10:03 AM' },
+      ],
+      input: '',
+      setInput: input => set({ input }),
+      addMessage: (text, user = 'You') => {
+        const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        const msg: Message = { id: crypto.randomUUID(), user, message: text, time: now }
+        set({ messages: [...get().messages, msg], input: '' })
+      },
+      clear: () => set({ messages: [], input: '' }),
+    }),
+    { name: 'chat-store' },
+  ),
+)
 
