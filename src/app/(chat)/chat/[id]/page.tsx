@@ -42,11 +42,9 @@ export default function ScrollAreaChat() {
 
       <ChatMessages>
         {isLoading ? (
-          <>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <ChatMessageSkeleton key={i} isUser={!!(i % 2)} />
-            ))}
-          </>
+          Array.from({ length: 8 }).map((_, i) => (
+            <ChatMessageSkeleton key={i} isUser={!!(i % 2)} />
+          ))
         ) : (
           <>
             {storeMessages.map(m => (
