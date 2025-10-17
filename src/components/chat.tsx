@@ -1,9 +1,9 @@
-import { cn, formatTimestamp } from '@/lib/utils'
 import { Send, Trash2 } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useChatStore } from '@/lib/store/chat'
+import { cn, formatTimestamp } from '@/lib/utils'
 import type { Message } from '@/lib/types'
 
 type ChatMessageProps = {
@@ -31,13 +31,14 @@ export function ChatHeader() {
   return (
     <div className="flex flex-row items-center py-4 px-8 space-x-4 border-b">
       <Avatar className="h-10 w-10">
+        <AvatarImage src="/avatars/pebbles.svg" />
         <AvatarFallback>P</AvatarFallback>
       </Avatar>
       <div className="min-w-0">
         <h1 className="truncate text-base font-semibold">Pebbles</h1>
         <p className="text-xs text-muted-foreground">Online</p>
       </div>
-      <Button 
+      <Button
         variant="secondary"
         size="icon"
         onClick={clear}
