@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useChatStore } from '@/lib/store/chat'
 import { cn, formatTimestamp } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { Message } from '@/lib/types'
 
 type ChatMessageProps = {
@@ -104,6 +105,33 @@ export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
             <Send className="h-4 w-4" />
           </Button>
         </form>
+      </div>
+    </div>
+  )
+}
+
+export function ChatMessageSkeleton({ isUser }: { isUser: boolean }) {
+  return (
+    <div className={cn('flex gap-3', isUser && 'flex-row-reverse')}>
+      {/* Avatar skeleton */}
+      {!isUser && <Skeleton className="h-8 w-8 rounded-full" />}
+
+      <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
+        {/* Bubble skeleton */}
+        <Skeleton className={cn(
+          'rounded-lg px-3 py-2 w-[20rem]',
+          isUser
+            ? 'bg-primary/10'
+            : 'bg-muted/60',
+        )}>
+          {/* Simulate multiple lines of text */}
+          <Skeleton className="h-4 w-70 mb-2 rounded-full" />
+          <Skeleton className="h-4 w-40 mb-2 rounded-full" />
+          <Skeleton className="h-4 w-50 rounded-full" />
+        </Skeleton>
+
+        {/* Timestamp skeleton */}
+        <Skeleton className="h-3 w-16" />
       </div>
     </div>
   )
