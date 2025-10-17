@@ -9,7 +9,9 @@ import {
 } from '@/components/chat'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatStore } from '@/lib/store/chat'
-import { mockSendMessage } from './actions'
+import { generateResponse } from './actions'
+import { useState } from 'react'
+
 
 export default function ChatPage() {
   const messages   = useChatStore(s => s.messages)
@@ -17,13 +19,17 @@ export default function ChatPage() {
   const setInput   = useChatStore(s => s.setInput)
   const addMessage = useChatStore(s => s.addMessage)
   const scrollRef  = useScrollToBottom(messages.length)
+  const [intent, setIntent] = useState<string | null>(null);
+  const [distortion, setDistortion] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState<string | null>(null);
+
   
   const handleSend = async () => {
     if (!input.trim()) return
     addMessage(input, 'You')
 
     // Call the server action (this runs on the server)
-    const { reply } = await mockSendMessage(input)
+    const { reply } = await generateResponse(input, intent!, distortion!, prompt!);
     addMessage(reply, 'Pebbles')
   }
 
