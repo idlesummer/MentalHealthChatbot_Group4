@@ -35,8 +35,8 @@ export function ChatHeader() {
         <AvatarFallback>P</AvatarFallback>
       </Avatar>
       <div className="min-w-0">
-        <h1 className="truncate text-base font-semibold">Pebbles</h1>
-        <p className="text-xs text-muted-foreground">Online</p>
+        <h1 className="truncate text-base font-semibold">Pebbles the Pibble</h1>
+        <p className="text-xs text-green-500">Online</p>
       </div>
       <Button
         variant="secondary"

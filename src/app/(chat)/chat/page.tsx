@@ -24,7 +24,7 @@ export default function ChatPage() {
 
     // Call the server action (this runs on the server)
     const { reply } = await mockSendMessage(input)
-    addMessage(reply, 'Aidora')
+    addMessage(reply, 'Pebbles')
   }
 
   return (
