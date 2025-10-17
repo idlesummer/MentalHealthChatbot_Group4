@@ -1,7 +1,7 @@
 import { Send, Trash2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { useChatStore } from '@/lib/store/chat'
 import { cn, formatTimestamp } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -88,6 +88,13 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
 }
 
 export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()  // stop newline
+      onSubmit()          // send message
+    }
+  }
+
   return (
     <div className="p-0">
       <div className="border-t p-3 w-full">
@@ -95,11 +102,12 @@ export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
           onSubmit={e => { e.preventDefault(); onSubmit() }}
           className="flex gap-2"
         >
-          <Input
+          <Textarea
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={e => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="flex-1"
+            className="flex-1 resize-none min-h-[1rem] max-h-[24rem]"
           />
           <Button type="submit" size="icon">
             <Send className="h-4 w-4" />
