@@ -52,7 +52,7 @@ export function ChatHeader() {
 
 export function ChatMessages({ children }: React.PropsWithChildren) {
   return (
-    <div className="flex-1 h-full overflow-y-auto scroll-smooth p-4 space-y-4">
+    <div className="flex-1 h-full overflow-y-auto scroll-smooth px-4 py-8 space-y-4">
       {children}
     </div>
   )

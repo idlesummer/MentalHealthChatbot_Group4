@@ -9,6 +9,7 @@ import {
 } from '@/components/chat'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatStore } from '@/lib/store/chat'
+import { mockSendMessage } from './actions'
 
 export default function ChatPage() {
   const messages   = useChatStore(s => s.messages)
@@ -17,9 +18,13 @@ export default function ChatPage() {
   const addMessage = useChatStore(s => s.addMessage)
   const scrollRef  = useScrollToBottom(messages.length)
   
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return
     addMessage(input, 'You')
+
+    // Call the server action (this runs on the server)
+    const { reply } = await mockSendMessage(input)
+    addMessage(reply, 'Aidora')
   }
 
   return (

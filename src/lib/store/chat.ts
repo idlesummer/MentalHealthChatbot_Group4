@@ -13,11 +13,7 @@ type ChatState = {
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
-      messages: [
-        { id: '1', user: 'Alex',  text: "Hey team! How's the project going?", ts: Date.now() - 600000 },
-        { id: '2', user: 'You',   text: 'Going great! Just finished the API integration', ts: Date.now() - 580000 },
-        { id: '3', user: 'Sarah', text: "Nice work! I'm wrapping up the UI components", ts: Date.now() - 560000 },
-      ],
+      messages: [{ id: '1', user: 'Pebbles',  text: 'Hey, hows it going?', ts: Date.now() - 600000 }],
       input: '',
       setInput: input => set({ input }),
       addMessage: (text, user = 'You') => {
