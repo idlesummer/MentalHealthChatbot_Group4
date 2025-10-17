@@ -72,10 +72,10 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
       )}
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
         <div className={cn(
-          'rounded-lg px-3 py-2 max-w-[50rem]', 
+          'px-3 py-2 max-w-[50rem] rounded-lg',
           isUser 
-            ? 'bg-primary text-primary-foreground' 
-            : 'bg-muted text-foreground',
+            ? 'bg-primary text-primary-foreground rounded-tr-none' 
+            : 'bg-muted text-foreground rounded-tl-none',
         )}>
           <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
         </div>
@@ -109,7 +109,7 @@ export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
             placeholder="Type a message..."
             className="flex-1 resize-none min-h-[1rem] max-h-[24rem]"
           />
-          <Button type="submit" size="icon">
+          <Button variant="outline" type="submit" size="icon">
             <Send className="h-4 w-4" />
           </Button>
         </form>
@@ -127,10 +127,10 @@ export function ChatMessageSkeleton({ isUser }: { isUser: boolean }) {
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
         {/* Bubble skeleton */}
         <Skeleton className={cn(
-          'rounded-lg px-3 py-2 w-[20rem]',
+          'px-3 py-2 w-[20rem] rounded-lg',
           isUser
-            ? 'bg-primary/10'
-            : 'bg-muted/60',
+            ? 'bg-primary/10 rounded-tr-none'
+            : 'bg-muted/60 rounded-tl-none',
         )}>
           {/* Simulate multiple lines of text */}
           <Skeleton className="h-3 w-70 mb-2 rounded-full" />

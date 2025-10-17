@@ -14,7 +14,6 @@ import { generateResponse } from './actions'
 import { useState } from 'react'
 import { useFakeLoading } from '@/hooks/use-fake-loading'
 
-
 export default function ChatPage() {
   const messages   = useChatStore(s => s.messages)
   const input      = useChatStore(s => s.input)
