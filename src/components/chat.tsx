@@ -125,9 +125,9 @@ export function ChatMessageSkeleton({ isUser }: { isUser: boolean }) {
             : 'bg-muted/60',
         )}>
           {/* Simulate multiple lines of text */}
-          <Skeleton className="h-4 w-70 mb-2 rounded-full" />
-          <Skeleton className="h-4 w-40 mb-2 rounded-full" />
-          <Skeleton className="h-4 w-50 rounded-full" />
+          <Skeleton className="h-3 w-70 mb-2 rounded-full" />
+          <Skeleton className="h-3 w-40 mb-2 rounded-full" />
+          <Skeleton className="h-3 w-50 rounded-full" />
         </Skeleton>
 
         {/* Timestamp skeleton */}
