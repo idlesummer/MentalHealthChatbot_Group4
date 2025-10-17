@@ -136,3 +136,11 @@ export function ChatMessageSkeleton({ isUser }: { isUser: boolean }) {
     </div>
   )
 }
+
+export function ChatMessageSkeletonList({ count }: { count: number }) {
+  return (
+    Array.from({ length: count }).map((_, i) => (
+      <ChatMessageSkeleton key={i} isUser={!!(i % 2)} />
+    ))
+  )
+}
