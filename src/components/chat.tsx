@@ -97,7 +97,7 @@ export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
 
   return (
     <div className="p-0">
-      <div className="border-t p-3 w-full">
+      <div className="px-3 pt-1 pb-6 w-full">
         <form
           onSubmit={e => { e.preventDefault(); onSubmit() }}
           className="flex gap-2"
