@@ -26,11 +26,12 @@ export default function ChatPage() {
   const isLoading = useFakeLoading(1500)
   
   const handleSend = async () => {
-    if (!input.trim()) return
-    addMessage(input, 'You')
+    const text = input.trim()
+    if (!text) return
+    addMessage(text, 'You')
 
     // Call the server action (this runs on the server)
-    const { reply } = await generateResponse(input, intent!, distortion!, prompt!)
+    const { reply } = await generateResponse(text, intent!, distortion!, prompt!)
     addMessage(reply, 'Pebbles')
   }
 
