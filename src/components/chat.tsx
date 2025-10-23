@@ -31,7 +31,7 @@ export function ChatHeader() {
   const clear = useChatStore(s => s.clear)
   return (
     <div className="flex flex-row items-center py-4 px-8 space-x-4 border-b">
-      <Avatar className="h-10 w-10">
+      <Avatar className="h-10 w-10 bg-muted">
         <AvatarImage src="/avatars/pebbles.svg" />
         <AvatarFallback>P</AvatarFallback>
       </Avatar>
@@ -65,7 +65,7 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
   return (
     <div className={cn('flex gap-3', isUser && 'flex-row-reverse', className)}>
       {!isUser && (
-        <Avatar className="h-8 w-8">
+        <Avatar className="h-8 w-8 bg-muted">
           <AvatarImage src="/avatars/pebbles.svg" />
           <AvatarFallback>{msg.user[0]}</AvatarFallback>
         </Avatar>
@@ -115,7 +115,7 @@ export function TypingMessage({
   return (
     <div className={cn('flex gap-3', isUser && 'flex-row-reverse', className)}>
       {!isUser && (
-        <Avatar className="h-8 w-8">
+        <Avatar className="h-8 w-8 bg-muted">
           <AvatarImage src={avatarSrc} />
           <AvatarFallback>{user[0] ?? '?'}</AvatarFallback>
         </Avatar>

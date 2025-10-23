@@ -45,9 +45,12 @@ export default function ChatPage() {
           ? <ChatMessageSkeletonList count={5} />
           : messages.map(m => <ChatMessage key={m.id} msg={m} />)
         }
+
+        {/* TODO: Integrate this with the actual message components */}
         <TypingMessage>
           <MessageSpinner />
         </TypingMessage>
+
         <div ref={scrollRef} />
       </ChatMessages>
       <ChatInput value={input} onChange={setInput} onSubmit={handleSend} />
