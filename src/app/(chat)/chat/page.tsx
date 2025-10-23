@@ -7,12 +7,14 @@ import {
   ChatMessage, 
   ChatInput,
   ChatMessageSkeletonList,
+  TypingMessage,
 } from '@/components/chat'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatStore } from '@/lib/store/chat'
 import { generateResponse } from './actions'
 import { useState } from 'react'
 import { useFakeLoading } from '@/hooks/use-fake-loading'
+import MessageSpinner from '@/components/elements/message-spinner'
 
 export default function ChatPage() {
   const messages   = useChatStore(s => s.messages)
@@ -43,6 +45,9 @@ export default function ChatPage() {
           ? <ChatMessageSkeletonList count={5} />
           : messages.map(m => <ChatMessage key={m.id} msg={m} />)
         }
+        <TypingMessage>
+          <MessageSpinner />
+        </TypingMessage>
         <div ref={scrollRef} />
       </ChatMessages>
       <ChatInput value={input} onChange={setInput} onSubmit={handleSend} />

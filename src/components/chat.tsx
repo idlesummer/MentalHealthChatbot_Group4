@@ -74,10 +74,12 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
         <div className={cn(
           'px-3 py-2 max-w-[50rem] rounded-lg',
           isUser 
-            ? 'bg-primary text-primary-foreground rounded-tr-none' 
-            : 'bg-muted text-foreground rounded-tl-none',
+            ? 'bg-primary text-primary-foreground rounded-br-none' 
+            : 'bg-muted text-foreground rounded-bl-none',
         )}>
-          <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+          <p className="text-sm whitespace-pre-wrap break-words">
+            {msg.text}
+          </p>
         </div>
         <span className="text-xs text-muted-foreground">
           {formatTimestamp(msg.ts)}
@@ -86,6 +88,61 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
     </div>
   )
 }
+
+type TypingMessageProps = {
+  /** Who is speaking (shown in avatar fallback). */
+  user?: string
+  /** Avatar image for the speaker. */
+  avatarSrc?: string
+  /** Extra classes for the outer row. */
+  className?: string
+  /** Put whatever you want inside the bubble (e.g., <MessageSpinner />). */
+  children: React.ReactNode
+  /** If true, render on the user side (right, primary bubble). Default: false (bot side). */
+  isUser?: boolean
+}
+
+// ==================================================
+// TODO: Refine this function
+
+export function TypingMessage({
+  user = 'Pebbles',
+  avatarSrc = '/avatars/pebbles.svg',
+  className,
+  children,
+  isUser = false,
+}: TypingMessageProps) {
+  return (
+    <div className={cn('flex gap-3', isUser && 'flex-row-reverse', className)}>
+      {!isUser && (
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={avatarSrc} />
+          <AvatarFallback>{user[0] ?? '?'}</AvatarFallback>
+        </Avatar>
+      )}
+
+      <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
+        <div
+          className={cn(
+            'px-3 py-2 max-w-[50rem] rounded-lg',
+            isUser
+              ? 'bg-primary text-primary-foreground rounded-br-none'
+              : 'bg-muted text-foreground rounded-bl-none',
+          )}
+        >
+          <p className="text-sm">
+            {children}
+          </p>
+        </div>
+        <span className="text-xs text-muted-foreground">
+          Typing…
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ==================================================
 
 export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -129,8 +186,8 @@ export function ChatMessageSkeleton({ isUser }: { isUser: boolean }) {
         <Skeleton className={cn(
           'px-3 py-2 w-[20rem] rounded-lg',
           isUser
-            ? 'bg-primary/10 rounded-tr-none'
-            : 'bg-muted/60 rounded-tl-none',
+            ? 'bg-primary/10 rounded-br-none'
+            : 'bg-muted/60 rounded-bl-none',
         )}>
           {/* Simulate multiple lines of text */}
           <Skeleton className="h-3 w-70 mb-2 rounded-full" />
