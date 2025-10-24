@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware'
 type ChatInputState = {
   input: string
   setInput: (v: string) => void
-  clear: () => void
+  clearInput: () => void
 }
 
 export const useChatInputStore = create<ChatInputState>()(
@@ -12,7 +12,7 @@ export const useChatInputStore = create<ChatInputState>()(
     (set) => ({
       input: '',
       setInput: input => set({ input }),
-      clear: () => set({ input: '' }),
+      clearInput: () => set({ input: '' }),
     }),
     {
       name: 'chat-input-store',

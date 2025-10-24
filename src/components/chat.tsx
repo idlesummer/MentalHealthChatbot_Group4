@@ -1,11 +1,11 @@
 import { Send, Trash2 } from 'lucide-react'
+import MessageSpinner from '@/components/elements/message-spinner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { useChatStore } from '@/lib/store/chat'
-import { cn, formatTimestamp } from '@/lib/utils'
-import MessageSpinner from '@/components/elements/message-spinner'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useChatMessagesStore } from '@/lib/store/chat-messages'
+import { cn, formatTimestamp } from '@/lib/utils'
 
 import type { PropsWithChildren } from 'react'
 import type { Message } from '@/lib/types'
@@ -20,7 +20,7 @@ export function Chat({ children }: PropsWithChildren) {
 
 export function ChatHeader() {
   // TODO: Temporary
-  const clear = useChatStore(s => s.clear)
+  const clearMessages = useChatMessagesStore(s => s.clearMessages)
   return (
     <div className="flex flex-row items-center py-4 px-8 space-x-4 border-b">
       <Avatar className="h-10 w-10 bg-muted">
@@ -34,7 +34,7 @@ export function ChatHeader() {
       <Button
         variant="secondary"
         size="icon"
-        onClick={clear}
+        onClick={clearMessages}
         className="ml-auto rounded-full" 
       >
         <Trash2 />
