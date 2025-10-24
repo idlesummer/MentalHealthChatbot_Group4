@@ -7,14 +7,15 @@
 ------------------------------
 
 import './globals.css'
+import type { PropsWithChildren } from 'react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'PebbleChat',
+  title: 'Pebbles',
   description: 'Chat with Pebbles!',
 }
 
-export default function RootLayout({ children }: Readonly<React.PropsWithChildren>) {
+export default function RootLayout({ children }: Readonly<PropsWithChildren>) {
   return (
     <html lang="en">
       <body className="antialiased">
@@ -32,7 +33,7 @@ export default function RootLayout({ children }: Readonly<React.PropsWithChildre
 
 import { redirect } from 'next/navigation'
 
-export default function Home() {
+export default function RootPage() {
   redirect('/chat')
 }
 
@@ -43,15 +44,58 @@ export default function Home() {
 ------------------------------
 
 'use server'
+import { ChatOpenAI } from '@langchain/openai'
+import { INTENT_PROMPTS_FEWSHOT, computeNextIntent } from '@/lib/ai/intent'
+import { z } from 'zod'
+import { COGNITIVE_DISTORTION_KEYS, identifyCognitiveDistortions } from '@/lib/ai/distortion'
 
+// All functions that call APIs is will be defined here
 
+const model = new ChatOpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+  model: "gpt-4o-mini",
+  temperature: 0.2,
+});
+
+const classify = model.withStructuredOutput(
+  z.object({
+    distortion: z.enum(COGNITIVE_DISTORTION_KEYS),
+    confidence: z.number().min(0).max(1),
+    rationale: z.string(),
+  })
+);
+
+async function buildPrompt(message: string, intent: string, prompt: string, messages: any): Promise<string> {
+  const distortionIdentified = await identifyCognitiveDistortions(message, classify);
+  const distortion = distortionIdentified.distortion;
+  const intentData = INTENT_PROMPTS_FEWSHOT[intent as keyof typeof INTENT_PROMPTS_FEWSHOT];
+  return [
+    `You are a CBT-based assistant helping the user manage their thoughts and emotions.`,
+    `Use this conversation history to inform your response:\n${messages.map((m: any) => `${m.user}: ${m.text}`).join("\n")}`,
+    `Use the following guidelines for this stage:\n${intentData.system}`,
+    `Identified Cognitive Distortion: ${distortion}.`,
+    `\nUser Message:\n"${message}"`,
+    `\nPlease respond in a way that aligns with the user's CBT stage and identified distortion.`,
+  ].join("\n");
+}
+
+export async function generateResponse(message: string, intent: string, distortion: string, prompt: string, messages: any) {
+  // const response = "You are a supportive mental health assistant and the user just said: " + message + ". Respond with empathy and understanding.";
+  const response = await buildPrompt(message, intent, prompt, messages);
+  console.log("FINAL PROMPT: ", response);
+  const reply = await model.invoke(response); 
+  const nextIntent = computeNextIntent(intent);
+  return { reply: reply.text, identifiedIntent: nextIntent };
+}
 
 ------------------------------
  FILE:  layout.tsx
  PATH:  app\(chat)\chat\layout.tsx
 ------------------------------
 
-export default function ChatLayout({ children }: React.PropsWithChildren) {
+import type { PropsWithChildren } from 'react'
+
+export default function ChatLayout({ children }: PropsWithChildren) {
   return (
     <div className="h-screen bg-muted overflow-hidden p-4">
       {children}
@@ -67,33 +111,62 @@ export default function ChatLayout({ children }: React.PropsWithChildren) {
 
 'use client'
 
+import { useState } from 'react'
 import { 
   Chat, 
   ChatHeader, 
   ChatMessages, 
   ChatMessage, 
   ChatInput,
+  ChatMessageSkeletonList,
 } from '@/components/chat'
+import { useFakeLoading } from '@/hooks/use-fake-loading'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
-import { useChatStore } from '@/lib/store/chat'
+import { useChatInputStore } from '@/lib/store/chat-input'
+import { useChatMessagesStore } from '@/lib/store/chat-messages'
+import { delay, rand } from '@/lib/utils'
+import { generateResponse } from './actions'
 
-export default function ScrollAreaChat() {
-  const messages   = useChatStore(s => s.messages)
-  const input      = useChatStore(s => s.input)
-  const setInput   = useChatStore(s => s.setInput)
-  const addMessage = useChatStore(s => s.addMessage)
-  const scrollRef  = useScrollToBottom(messages.length)
+export default function ChatPage() {
+  // Stores
+  const { input, setInput, clearInput } = useChatInputStore()
+  const { messages, addMessage } = useChatMessagesStore()
+
+  // UI Hooks
+  const [isTyping, setIsTyping] = useState(false)
+  const isLoading = useFakeLoading(1500)
+  const scrollRef = useScrollToBottom([messages, isLoading, isTyping])
+
+  // Local State
+  const [intent, setIntent] = useState<string | null>('I1')
+  const [distortion] = useState<string | null>(null)
+  const [prompt] = useState<string | null>(null)
   
-  const handleSend = () => {
-    if (!input.trim()) return
+  // Send handler
+  const handleSend = async () => {
+    const text = input.trim()
+    if (!text) return
+
     addMessage(input, 'You')
+    clearInput()
+    await delay(rand(1000, 4000))
+
+    setIsTyping(true)
+    const { reply, identifiedIntent } = await generateResponse(input, intent!, distortion!, prompt!, messages)
+    setIsTyping(false)
+
+    addMessage(reply, 'Pebbles')
+    setIntent(identifiedIntent)
   }
 
   return (
     <Chat>      
       <ChatHeader />
       <ChatMessages>
-        {messages.map(m => <ChatMessage key={m.id} msg={m} />)}
+        {isLoading 
+          ? <ChatMessageSkeletonList count={5} />
+          : messages.map(m => <ChatMessage key={m.id} msg={m} />)}
+        {isTyping && <ChatMessage />}
         <div ref={scrollRef} />
       </ChatMessages>
       <ChatInput value={input} onChange={setInput} onSubmit={handleSend} />
@@ -107,26 +180,19 @@ export default function ScrollAreaChat() {
  PATH:  components\chat.tsx
 ------------------------------
 
-import { cn, formatTimestamp } from '@/lib/utils'
 import { Send, Trash2 } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import MessageSpinner from '@/components/elements/message-spinner'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useChatStore } from '@/lib/store/chat'
+import { Textarea } from '@/components/ui/textarea'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useChatMessagesStore } from '@/lib/store/chat-messages'
+import { cn, formatTimestamp } from '@/lib/utils'
+
+import type { KeyboardEvent, PropsWithChildren } from 'react'
 import type { Message } from '@/lib/types'
 
-type ChatMessageProps = {
-  msg: Message
-  className?: string
-}
-
-type ChatInputProps = {
-  value: string
-  onChange: (next: string) => void
-  onSubmit: () => void | Promise<void>
-}
-
-export function Chat({ children }: React.PropsWithChildren) {
+export function Chat({ children }: PropsWithChildren) {
   return (
     <div className="flex flex-col mx-auto h-full max-w-5xl bg-background shadow-sm rounded-2xl">
       {children}
@@ -136,20 +202,21 @@ export function Chat({ children }: React.PropsWithChildren) {
 
 export function ChatHeader() {
   // TODO: Temporary
-  const clear = useChatStore(s => s.clear)
+  const clearMessages = useChatMessagesStore(s => s.clearMessages)
   return (
     <div className="flex flex-row items-center py-4 px-8 space-x-4 border-b">
-      <Avatar className="h-10 w-10">
+      <Avatar className="h-10 w-10 bg-muted">
+        <AvatarImage src="/avatars/pebbles.svg" />
         <AvatarFallback>P</AvatarFallback>
       </Avatar>
       <div className="min-w-0">
-        <h1 className="truncate text-base font-semibold">Pebbles</h1>
-        <p className="text-xs text-muted-foreground">Online</p>
+        <h1 className="truncate text-base font-semibold">Pebbles the Pibble</h1>
+        <p className="text-xs text-green-500">Online</p>
       </div>
-      <Button 
+      <Button
         variant="secondary"
         size="icon"
-        onClick={clear}
+        onClick={clearMessages}
         className="ml-auto rounded-full" 
       >
         <Trash2 />
@@ -158,60 +225,171 @@ export function ChatHeader() {
   )
 }
 
-export function ChatMessages({ children }: React.PropsWithChildren) {
+export function ChatMessages({ children }: PropsWithChildren) {
   return (
-    <div className="flex-1 h-full overflow-y-auto scroll-smooth p-4 space-y-4">
+    <div className="flex-1 h-full overflow-y-auto scroll-smooth px-4 py-8 space-y-4">
       {children}
     </div>
   )
 }
 
+type ChatMessageProps = {
+  className?: string
+  msg?: Message
+}
+
 export function ChatMessage({ msg, className }: ChatMessageProps) {
-  const isUser = msg.user === 'You'
+  const isUser = msg?.user === 'You'
+  const hasText = !!(msg?.text && msg?.text.trim().length > 0)
 
   return (
     <div className={cn('flex gap-3', isUser && 'flex-row-reverse', className)}>
       {!isUser && (
-        <Avatar className="h-8 w-8">
-          <AvatarFallback>{msg.user[0]}</AvatarFallback>
+        <Avatar className="h-8 w-8 bg-muted">
+          <AvatarImage src="/avatars/pebbles.svg" />
+          <AvatarFallback>{msg?.user[0]}</AvatarFallback>
         </Avatar>
       )}
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
         <div className={cn(
-          'rounded-lg px-3 py-2 max-w-[50rem]', 
+          'px-3 py-2 max-w-[50rem] rounded-lg',
           isUser 
-            ? 'bg-primary text-primary-foreground' 
-            : 'bg-muted text-foreground',
+            ? 'bg-primary text-primary-foreground rounded-br-none' 
+            : 'bg-muted text-foreground rounded-bl-none',
         )}>
-          <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+          <p className="text-sm whitespace-pre-wrap break-words">
+            {hasText 
+              ? msg.text 
+              : <MessageSpinner />}
+          </p>
         </div>
-        <span className="text-xs text-muted-foreground">
-          {formatTimestamp(msg.ts)}
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          {msg ? formatTimestamp(msg.ts) : 'Typingâ€¦'}
         </span>
       </div>
     </div>
   )
 }
 
+type ChatInputProps = {
+  value: string
+  onChange: (next: string) => void
+  onSubmit: () => void | Promise<void>
+}
+
 export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== 'Enter' || e.shiftKey) return
+    e.preventDefault()
+    onSubmit()
+  }
   return (
     <div className="p-0">
-      <div className="border-t p-3 w-full">
+      <div className="px-3 pt-1 pb-6 w-full">
         <form
-          onSubmit={e => { e.preventDefault(); onSubmit() }}
+          onSubmit={e => e.preventDefault()}
           className="flex gap-2"
         >
-          <Input
+          <Textarea
             value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1"
+            onChange={e => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Send a message..."
+            className="flex-1 resize-none min-h-[1rem] max-h-[24rem]"
           />
-          <Button type="submit" size="icon">
+          <Button variant="outline" type="submit" size="icon">
             <Send className="h-4 w-4" />
           </Button>
         </form>
       </div>
+    </div>
+  )
+}
+
+export function ChatMessageSkeleton({ isUser }: { isUser: boolean }) {
+  return (
+    <div className={cn('flex gap-3', isUser && 'flex-row-reverse')}>
+      {/* Avatar skeleton */}
+      {!isUser && <Skeleton className="h-8 w-8 rounded-full" />}
+
+      <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
+        {/* Bubble skeleton */}
+        <Skeleton className={cn(
+          'px-3 py-2 w-[20rem] rounded-lg',
+          isUser
+            ? 'bg-primary/10 rounded-br-none'
+            : 'bg-muted/60 rounded-bl-none',
+        )}>
+          {/* Simulate multiple lines of text */}
+          <Skeleton className="h-3 w-70 mb-2 rounded-full" />
+          <Skeleton className="h-3 w-40 mb-2 rounded-full" />
+          <Skeleton className="h-3 w-50 rounded-full" />
+        </Skeleton>
+
+        {/* Timestamp skeleton */}
+        <Skeleton className="h-3 w-16" />
+      </div>
+    </div>
+  )
+}
+
+export function ChatMessageSkeletonList({ count }: { count: number }) {
+  return (
+    Array.from({ length: count }).map((_, i) => (
+      <ChatMessageSkeleton key={i} isUser={!!(i % 2)} />
+    ))
+  )
+}
+
+
+------------------------------
+ FILE:  message-spinner.tsx
+ PATH:  components\elements\message-spinner.tsx
+------------------------------
+
+import { cn } from '@/lib/utils'
+
+export default function MessageSpinner({ 
+  className, 
+  ...props  
+}: React.HTMLAttributes<HTMLDivElement>) {
+
+  return (
+    <div
+      className={cn(
+        'inline-flex items-center leading-none align-middle text-sm', 
+        className,
+      )}
+      {...props}
+    >
+      <div className={`
+        inline-block 
+        w-[0.4em] h-[0.4em] mx-[0.1em] 
+        rounded-full bg-neutral-400 
+        animate-[bouncing_0.6s_infinite_alternate_both]
+      `}/>
+      <div className={`
+        inline-block 
+        w-[0.4em] h-[0.4em] mx-[0.1em] 
+        rounded-full bg-neutral-400 
+        animate-[bouncing_0.6s_infinite_alternate_both]
+        [animation-delay:0.2s]
+      `}/>
+      <div className={`
+        inline-block 
+        w-[0.4em] h-[0.4em] mx-[0.1em] 
+        rounded-full bg-neutral-400 
+        animate-[bouncing_0.6s_infinite_alternate_both]
+        [animation-delay:0.4s]
+      `}/>
+      <style jsx global>{`
+        @keyframes bouncing {
+          to {
+            opacity: 0.1;
+            transform: translateY(-0.2em);
+          }
+        }
+      `}</style>
     </div>
   )
 }
@@ -255,6 +433,25 @@ export function PingPongLoader() {
 
 
 ------------------------------
+ FILE:  use-fake-loading.ts
+ PATH:  hooks\use-fake-loading.ts
+------------------------------
+
+import { useEffect, useState } from 'react'
+
+export function useFakeLoading(duration = 1500) {
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsLoading(false), duration)
+    return () => clearTimeout(timeout)
+  }, [duration])
+
+  return isLoading
+}
+
+
+------------------------------
  FILE:  use-mobile.ts
  PATH:  hooks\use-mobile.ts
 ------------------------------
@@ -289,12 +486,12 @@ export function useIsMobile() {
 
 import { useEffect, useRef } from 'react'
 
-export function useScrollToBottom(trigger?: unknown) {
+export function useScrollToBottom(deps?: unknown[]) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [trigger])
+  }, deps)
 
   return ref
 }
@@ -306,7 +503,7 @@ export function useScrollToBottom(trigger?: unknown) {
 ------------------------------
 
 export type Message = {
-  id: string | number
+  id: string
   user: string
   text: string
   ts: number
@@ -325,32 +522,333 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatTimestamp(ts: number): string {
+export function formatTimestamp(ts: number) {
   const date = new Date(ts)
-  const now = new Date()
+  const isToday = date.toDateString() === new Date().toDateString()
 
-  const isToday =
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear()
-
-  if (isToday) {
-    // Just show time (e.g. "10:05 AM")
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
-  // Otherwise show full date + time (e.g. "Oct 16, 10:05 AM")
   return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
+    month: isToday ? undefined : 'short',
+    day: isToday ? undefined : 'numeric',
   })
 }
 
+export async function delay(ms: number ) {
+  return new Promise(res => setTimeout(res, ms))
+}
+
+export function rand(min: number, max: number): number { 
+  return Math.random() * (max - min) + min
+}
+
+
+------------------------------
+ FILE:  distortion.ts
+ PATH:  lib\ai\distortion.ts
+------------------------------
+
+export const COGNITIVE_DISTORTION_KEYS = [
+  "All-or-Nothing Thinking",
+  "Overgeneralization",
+  "Mental Filtering",
+  "Discounting the Positive",
+  "Jumping to Conclusions",
+  "Catastrophizing",
+  "Emotional Reasoning",
+  "Should Statements",
+  "Labeling",
+  "Personalization & Blame",
+] as const;
+
+
+type CognitiveDistortion = typeof COGNITIVE_DISTORTION_KEYS[number];
+
+const COGNITIVE_DISTORTIONS: Record<CognitiveDistortion, string> = {
+  "All-or-Nothing Thinking": "Seeing things as all good or all bad â€” no gray area.",
+  "Overgeneralization": "Taking one event and applying it broadly ('I always mess things up').",
+  "Mental Filtering": "Focusing only on the negative and ignoring the positive.",
+  "Discounting the Positive": "Rejecting positive experiences by insisting they donâ€™t count.",
+  "Jumping to Conclusions": "Making negative interpretations without evidence.",
+  "Catastrophizing": "Exaggerating the importance of problems or imagining the worst-case scenario.",
+  "Emotional Reasoning": "Believing that negative feelings reflect reality ('I feel it, so it must be true').",
+  "Should Statements": "Using rigid rules on yourself or others ('I should always do well').",
+  "Labeling": "Assigning global negative labels to yourself or others ('Iâ€™m a failure').",
+  "Personalization & Blame": "Blaming yourself for things outside your control, or blaming others excessively.",
+};
+
+export async function identifyCognitiveDistortions(message: string, classify: any) {
+  const optionsList = COGNITIVE_DISTORTION_KEYS
+    .map((k) => `- ${k}: ${COGNITIVE_DISTORTIONS[k]}`)
+    .join("\n");
+
+  const system = [
+    "You are a CBT assistant.",
+    "Classify the user's text into exactly one cognitive distortion from the provided list.",
+    "If several apply, pick the best single fit.",
+    "If there aren't any that fit, choose 'none'.",
+    "Return JSON matching the schema exactly.",
+  ].join(" ");
+
+  const res = await classify.invoke([
+    { role: "system", content: system },
+    {
+      role: "user",
+      content: `Options:\n${optionsList}\n\nUser text:\n"""${message}"""`,
+    },
+  ]);
+
+  console.log("RES: ", res);
+  return res; 
+}
+
+
+
+------------------------------
+ FILE:  intent.ts
+ PATH:  lib\ai\intent.ts
+------------------------------
+
+const INTENT_ROUTES: Record<string, string | null> = {
+  I1: "I2",
+  I2: "I3",
+  I3: "I4",   // after initial rating, proceed to evidence-for
+  I4: "I5",
+  I5: "I6",   // after evidence against, go to re-rating
+  I6: "I7",   // after re-rating, go to coping
+  I7: "I1",   // end
+};
+
+export function computeNextIntent(current: string): string | null {
+  return INTENT_ROUTES[current] ?? null;
+}
+
+export const INTENT_PROMPTS_FEWSHOT = {
+  I1: {
+    role: "Situation Identification",
+    system: 
+      `
+        You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework.  
+        Your current goal is to complete **Step 1: Situation Identification (I1)** â€” to help the user describe the situation that is causing them stress, worry, or discomfort.  
+
+        **Tone:** Warm, empathetic, and conversational.  
+
+        **Your task:** Encourage the user to share the situation without judgment.  
+        Do **NOT** analyze, suggest solutions, or move to other steps yet.  
+
+        If the user already describes a situation:  
+        - Classify it as **"Situation"** intent  
+        - Explicitly print that in a new line after your response  
+
+        If the user does **not** describe a situation yet:  
+        - Continue gently prompting them to do so  
+
+        **Additional Instructions:**  
+        Once an intent is received, assign it to a new line labeled **"Context:"**, which summarizes the situation the user is in.  
+        Once you have identified the situation and are no longer receiving a situation context, print out a **"next intent"** line.  
+
+        ---
+
+        ### **Examples**
+
+        **Example 1**  
+        **User:** Hi, Iâ€™ve been feeling really anxious lately.  
+        **Response:** I hear you. Anxiety can be really tough to deal with. Can you tell me a bit more about whatâ€™s been happening lately thatâ€™s been making you feel anxious?  
+        **Intent:** Situation  
+        **Context:** User has been feeling anxious lately  
+
+        ---
+
+        **Example 2**  
+        **User:** Work has been really stressful. My boss keeps piling on deadlines.  
+        **Response:** That sounds overwhelming. It seems like work pressure is really weighing on you. Could you describe whatâ€™s been happening at work thatâ€™s been the most stressful for you?  
+        **Intent:** Situation  
+        **Context:** User's work has been stressful as their boss keeps piling on deadlines.  
+
+        **User:** On top of that, I keep getting the short end of the stick compared to everyone else.  
+        **Response:** That really must be frustrating. Why do you say that is?  
+        **Intent:** Situation  
+        **Context:** User's work has been stressful as their boss keeps piling on deadlines, and they believe they are being treated differently compared to others.  
+        **Next intent**
+
+        ---
+
+        **Startup Behavior:**  
+        Since this is the first intent (I1) and the first part of the conversation:  
+        - Introduce yourself warmly  
+        - Help the user feel comfortable opening up  
+        - Do **not** proceed to the next intent until a valid situation has been clearly described 
+      `.trim(),
+  },
+
+  I2: {
+    role: "Automatic Thought Identification",
+    system: `
+      ROLE:
+      You are the "Automatic Thought Identification" module.  
+      Your job is to help the user articulate the first thoughts that came to mind when the stressful event occurred.  
+
+
+      TASK:
+      - Ask one focused, open-ended question at a time.  
+      - Use neutral, conversational tone.  
+      - Avoid interpretations or assumptions about the user's thoughts. 
+
+
+      OUTPUT:
+      - Output ONLY one question.  
+      - Keep the question short and clear (max 20 words).  
+      - Do not suggest any possible answers; let the user generate their own.  
+
+
+      RULES:
+      1. Base the question on the most recent situation summary.  
+      2. Avoid judgmental or diagnostic language.  
+      3. If the user seems confused, give a simple rephrase: "What did you tell yourself when this happened?"  
+
+      EXAMPLES:  
+      - "What was the very first thought that came to your mind when this happened?"  
+      - "When this situation happened, what did you tell yourself?"  
+
+    `.trim(),
+  },
+
+  I3: {
+    role: "Mood Rating",
+    system: `
+      ROLE:
+      You are the "Mood Rating" module.  
+      You help the user rate the intensity of their emotions on a 1-10 scale.  
+
+
+
+      TASK:
+      - Ask the user to provide a single number rating.  
+      - Use the same scale throughout the conversation for consistency.  
+
+
+      OUTPUT:
+      - Output ONLY one simple question.  
+      - Include a reminder of what 1 and 10 mean for clarity. 
+
+
+      RULES:
+      1. Never suggest what the user's rating should be.  
+      2. Keep tone neutral; do not praise or criticize ratings.  
+      3. If user gives a rating outside 1-10, ask them to rate again within the scale.  
+
+      EXAMPLES:  
+      - "On a scale of 1-10, where 1 = very mild and 10 = very strong, how intense is this feeling?"  
+
+    `.trim(),
+  },
+
+  I4: {
+    role: "Evidence For and Against", 
+    system: `
+      ROLE:  
+      You are the "Evidence For and Against" module.  
+      Your goal is to help the user examine the thought objectively by exploring supporting and contradicting evidence.  
+
+      TASK:  
+      - Ask two sequential questions:  
+        1) Evidence supporting the thought  
+        2) Evidence against the thought  
+
+      OUTPUT REQUIREMENTS:  
+      - Ask only one question at a time.  
+      - Keep each question short and neutral.  
+
+      RULES:  
+      1. Never argue with the user or insert your own reasoning.  
+      2. Accept all evidence as valid; you are only guiding, not judging.  
+      3. Use simple language that encourages reflection.  
+
+      EXAMPLES:  
+      - "What makes you think this thought is true?"  
+      - "Is there anything that makes you think this thought might not be completely true?"  
+
+    `.trim(),
+  },
+
+  I5: {
+    role: "Alternative Thought Generation",
+    system: `
+      ROLE:  
+      You are the "Alternative Thought Generation" module.  
+      You help the user create a more balanced way of looking at the situation.  
+
+      TASK:  
+      - Suggest 1â€“2 possible alternative thoughts using tentative language.  
+      - Encourage the user to come up with their own version if they wish.  
+
+      OUTPUT REQUIREMENTS:  
+      - Output only 2â€“3 sentences maximum.  
+      - Use phrases like "Maybe another way to look at this isâ€¦" or "Could it be thatâ€¦".  
+
+      RULES:  
+      1. Never impose or tell the user what they must think.  
+      2. Keep suggestions realistic and compassionate, not overly positive or dismissive.  
+      3. Do not contradict the user; gently offer new perspectives.  
+
+      EXAMPLES:  
+      - "Could there be another way to look at this situation?"  
+      - "Maybe a different thought could be: 'This is stressful, but I have handled challenges before.' What do you think?"  
+ 
+    `.trim(),
+  },
+
+  I6: {
+    role: "Mood re-rating",
+    system: `
+      ROLE:   
+      You are the "Mood Re-Rating" module.  
+      Your job is to help the user measure whether their feelings changed after considering alternative thoughts.  
+
+      TASK:  
+      - Ask the user to rate their mood again using the same 1-10 scale.  
+
+      OUTPUT REQUIREMENTS:  
+      - Output only one simple question.  
+      - Reference the previous rating for comparison.  
+
+      RULES:  
+      1. If user forgets previous rating, remind them briefly: "Earlier you rated it as X."  
+      2. If rating is outside 1-10, ask them to re-rate correctly.  
+
+      EXAMPLES:  
+      - "Earlier you rated your stress as 8 out of 10. After thinking about alternative perspectives, how would you rate it now?" 
+ 
+
+    `.trim(),
+  },
+
+  I7: {
+    role: "Coping Strategy Recommendation",
+    system: `
+      ROLE:  
+        You are the "Coping Strategy" module.  
+        You provide practical, easy-to-try coping ideas after the user finishes mood re-rating.  
+
+        TASK:  
+        - Suggest 2-3 simple, non-clinical strategies based on what they shared.  
+        - Keep them general (e.g., breathing, journaling, taking breaks).  
+
+        OUTPUT REQUIREMENTS:  
+        - Present strategies as optional, not prescriptive.  
+        - Use short sentences, warm tone, and neutral phrasing.  
+
+        RULES:  
+        1. Never give medical or diagnostic advice.  
+        2. Keep suggestions realistic and easy to try.  
+        3. Encourage but never pressure the user.  
+
+        EXAMPLES:  
+        - "Some people find it helpful to take a short walk or do a breathing exercise. Would you like to try one?"  
+        - "Another option is writing your thoughts in a journal for five minutesâ€”it can help organize feelings."  
+      `.trim(),
+  },
+};
 
 ------------------------------
  FILE:  queries.ts
@@ -359,43 +857,71 @@ export function formatTimestamp(ts: number): string {
 
 
 ------------------------------
- FILE:  chat.ts
- PATH:  lib\store\chat.ts
+ FILE:  chat-input.ts
+ PATH:  lib\store\chat-input.ts
+------------------------------
+
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+type ChatInputState = {
+  input: string
+  setInput: (v: string) => void
+  clearInput: () => void
+}
+
+export const useChatInputStore = create<ChatInputState>()(
+  persist(
+    (set) => ({
+      input: '',
+      setInput: input => set({ input }),
+      clearInput: () => set({ input: '' }),
+    }),
+    {
+      name: 'chat-input-store',
+      // partialize: (state) => ({ input: state.input }),  // only save input
+    },
+  ),
+)
+
+
+------------------------------
+ FILE:  chat-messages.ts
+ PATH:  lib\store\chat-messages.ts
 ------------------------------
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Message } from '@/lib/types'
 
-type ChatState = {
+type ChatMessagesState = {
   messages: Message[]
-  input: string
-  setInput: (v: string) => void
-  addMessage: (text: string, from?: string) => void
-  clear: () => void
+  addMessage: (text: string, user: string) => void
+  clearMessages: () => void
 }
 
-export const useChatStore = create<ChatState>()(
+export const useChatMessagesStore = create<ChatMessagesState>()(
   persist(
     (set, get) => ({
-      messages: [
-        { id: '1', user: 'Alex',  text: "Hey team! How's the project going?", ts: Date.now() - 600000 },
-        { id: '2', user: 'You',   text: 'Going great! Just finished the API integration', ts: Date.now() - 580000 },
-        { id: '3', user: 'Sarah', text: "Nice work! I'm wrapping up the UI components", ts: Date.now() - 560000 },
-      ],
-      input: '',
-      setInput: input => set({ input }),
-      addMessage: (text, user = 'You') => {
-        const now = Date.now()
-        const msg: Message = { id: crypto.randomUUID(), user, text, ts: now }
-        set({ messages: [...get().messages, msg], input: '' })
+      messages: [{ 
+        id: '1', 
+        user: 'Pebbles', 
+        text: 'Hey, hows it going?', 
+        ts: Date.now(),
+      }],
+      addMessage: (text, user) => {
+        const id = crypto.randomUUID()
+        const ts = Date.now()
+        const msg = { id, user, text, ts }
+        set({ messages: [...get().messages, msg] })
       },
-      clear: () => {
-        set({ messages: [], input: '' })
-        useChatStore.persist.clearStorage()
+      clearMessages: () => {
+        set({ messages: [] })
       },
     }),
-    { name: 'chat-store' },
+    {
+      name: 'chat-messages-store',
+    },
   ),
 )
 
