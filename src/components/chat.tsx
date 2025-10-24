@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useChatMessagesStore } from '@/lib/store/chat-messages'
 import { cn, formatTimestamp } from '@/lib/utils'
 
-import type { PropsWithChildren } from 'react'
+import type { KeyboardEvent, PropsWithChildren } from 'react'
 import type { Message } from '@/lib/types'
 
 export function Chat({ children }: PropsWithChildren) {
@@ -78,11 +78,10 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
           <p className="text-sm whitespace-pre-wrap break-words">
             {hasText 
               ? msg.text 
-              : <MessageSpinner />
-            }
+              : <MessageSpinner />}
           </p>
         </div>
-        <span className="text-xs text-muted-foreground">
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
           {msg ? formatTimestamp(msg.ts) : 'Typing…'}
         </span>
       </div>
@@ -97,25 +96,23 @@ type ChatInputProps = {
 }
 
 export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()  // stop newline
-      onSubmit()          // send message
-    }
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && e.shiftKey) return
+    e.preventDefault()
+    onSubmit()
   }
-
   return (
     <div className="p-0">
       <div className="px-3 pt-1 pb-6 w-full">
         <form
-          onSubmit={e => { e.preventDefault(); onSubmit() }}
+          onSubmit={e => e.preventDefault()}
           className="flex gap-2"
         >
           <Textarea
             value={value}
             onChange={e => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
+            placeholder="Send a message..."
             className="flex-1 resize-none min-h-[1rem] max-h-[24rem]"
           />
           <Button variant="outline" type="submit" size="icon">
