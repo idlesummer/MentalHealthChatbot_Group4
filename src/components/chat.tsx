@@ -4,21 +4,13 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useChatStore } from '@/lib/store/chat'
 import { cn, formatTimestamp } from '@/lib/utils'
+import MessageSpinner from '@/components/elements/message-spinner'
 import { Skeleton } from '@/components/ui/skeleton'
+
+import type { PropsWithChildren } from 'react'
 import type { Message } from '@/lib/types'
 
-type ChatMessageProps = {
-  msg: Message
-  className?: string
-}
-
-type ChatInputProps = {
-  value: string
-  onChange: (next: string) => void
-  onSubmit: () => void | Promise<void>
-}
-
-export function Chat({ children }: React.PropsWithChildren) {
+export function Chat({ children }: PropsWithChildren) {
   return (
     <div className="flex flex-col mx-auto h-full max-w-5xl bg-background shadow-sm rounded-2xl">
       {children}
@@ -51,7 +43,7 @@ export function ChatHeader() {
   )
 }
 
-export function ChatMessages({ children }: React.PropsWithChildren) {
+export function ChatMessages({ children }: PropsWithChildren) {
   return (
     <div className="flex-1 h-full overflow-y-auto scroll-smooth px-4 py-8 space-y-4">
       {children}
@@ -59,15 +51,21 @@ export function ChatMessages({ children }: React.PropsWithChildren) {
   )
 }
 
+type ChatMessageProps = {
+  className?: string
+  msg?: Message
+}
+
 export function ChatMessage({ msg, className }: ChatMessageProps) {
-  const isUser = msg.user === 'You'
+  const isUser = msg?.user === 'You'
+  const hasText = !!(msg?.text && msg?.text.trim().length > 0)
 
   return (
     <div className={cn('flex gap-3', isUser && 'flex-row-reverse', className)}>
       {!isUser && (
         <Avatar className="h-8 w-8 bg-muted">
           <AvatarImage src="/avatars/pebbles.svg" />
-          <AvatarFallback>{msg.user[0]}</AvatarFallback>
+          <AvatarFallback>{msg?.user[0]}</AvatarFallback>
         </Avatar>
       )}
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
@@ -78,71 +76,25 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
             : 'bg-muted text-foreground rounded-bl-none',
         )}>
           <p className="text-sm whitespace-pre-wrap break-words">
-            {msg.text}
+            {hasText 
+              ? msg.text 
+              : <MessageSpinner />
+            }
           </p>
         </div>
         <span className="text-xs text-muted-foreground">
-          {formatTimestamp(msg.ts)}
+          {msg ? formatTimestamp(msg.ts) : 'Typing…'}
         </span>
       </div>
     </div>
   )
 }
 
-type TypingMessageProps = {
-  /** Who is speaking (shown in avatar fallback). */
-  user?: string
-  /** Avatar image for the speaker. */
-  avatarSrc?: string
-  /** Extra classes for the outer row. */
-  className?: string
-  /** Put whatever you want inside the bubble (e.g., <MessageSpinner />). */
-  children: React.ReactNode
-  /** If true, render on the user side (right, primary bubble). Default: false (bot side). */
-  isUser?: boolean
+type ChatInputProps = {
+  value: string
+  onChange: (next: string) => void
+  onSubmit: () => void | Promise<void>
 }
-
-// ==================================================
-// TODO: Refine this function
-
-export function TypingMessage({
-  user = 'Pebbles',
-  avatarSrc = '/avatars/pebbles.svg',
-  className,
-  children,
-  isUser = false,
-}: TypingMessageProps) {
-  return (
-    <div className={cn('flex gap-3', isUser && 'flex-row-reverse', className)}>
-      {!isUser && (
-        <Avatar className="h-8 w-8 bg-muted">
-          <AvatarImage src={avatarSrc} />
-          <AvatarFallback>{user[0] ?? '?'}</AvatarFallback>
-        </Avatar>
-      )}
-
-      <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
-        <div
-          className={cn(
-            'px-3 py-2 max-w-[50rem] rounded-lg',
-            isUser
-              ? 'bg-primary text-primary-foreground rounded-br-none'
-              : 'bg-muted text-foreground rounded-bl-none',
-          )}
-        >
-          <p className="text-sm">
-            {children}
-          </p>
-        </div>
-        <span className="text-xs text-muted-foreground">
-          Typing…
-        </span>
-      </div>
-    </div>
-  )
-}
-
-// ==================================================
 
 export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

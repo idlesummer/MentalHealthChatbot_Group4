@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatTimestamp(ts: number): string {
+export function formatTimestamp(ts: number) {
   const date = new Date(ts)
   const now = new Date()
 
@@ -29,4 +29,12 @@ export function formatTimestamp(ts: number): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+export async function delay(ms: number ) {
+  return new Promise(res => setTimeout(res, ms))
+}
+
+export function rand(min: number, max: number): number { 
+  return Math.random() * (max - min) + min
 }

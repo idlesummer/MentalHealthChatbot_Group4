@@ -2,12 +2,12 @@
 
 import { useEffect, useRef } from 'react'
 
-export function useScrollToBottom(trigger?: unknown) {
+export function useScrollToBottom(deps?: unknown[]) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [trigger])
+  }, deps)
 
   return ref
 }

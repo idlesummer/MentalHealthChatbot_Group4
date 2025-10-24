@@ -1,4 +1,5 @@
 import './globals.css'
+import type { PropsWithChildren } from 'react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -6,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Chat with Pebbles!',
 }
 
-export default function RootLayout({ children }: Readonly<React.PropsWithChildren>) {
+export default function RootLayout({ children }: Readonly<PropsWithChildren>) {
   return (
     <html lang="en">
       <body className="antialiased">

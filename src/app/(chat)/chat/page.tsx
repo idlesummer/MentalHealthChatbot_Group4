@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { 
   Chat, 
   ChatHeader, 
@@ -7,33 +8,39 @@ import {
   ChatMessage, 
   ChatInput,
   ChatMessageSkeletonList,
-  TypingMessage,
 } from '@/components/chat'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatStore } from '@/lib/store/chat'
+import { useChatInputStore } from '@/lib/store/chat-input'
 import { generateResponse } from './actions'
-import { useState } from 'react'
 import { useFakeLoading } from '@/hooks/use-fake-loading'
-import MessageSpinner from '@/components/elements/message-spinner'
+import { delay, rand } from '@/lib/utils'
 
 export default function ChatPage() {
-  const messages   = useChatStore(s => s.messages)
-  const input      = useChatStore(s => s.input)
-  const setInput   = useChatStore(s => s.setInput)
+  const input = useChatInputStore(s => s.input)
+  const setInput = useChatInputStore(s => s.setInput)
+  const clearInput = useChatInputStore(s => s.clear)
+
+  const messages = useChatStore(s => s.messages)
   const addMessage = useChatStore(s => s.addMessage)
-  const scrollRef  = useScrollToBottom(messages.length)
+  const isLoading = useFakeLoading(1500)
+  const [isTyping, setIsTyping] = useState(false)
+  const scrollRef  = useScrollToBottom([messages, isLoading, isTyping])
+  
   const [intent, setIntent] = useState<string | null>(null)
   const [distortion, setDistortion] = useState<string | null>(null)
   const [prompt, setPrompt] = useState<string | null>(null)
-  const isLoading = useFakeLoading(1500)
   
   const handleSend = async () => {
+    clearInput()
     const text = input.trim()
     if (!text) return
     addMessage(text, 'You')
 
-    // Call the server action (this runs on the server)
+    await delay(rand(1000, 4000))
+    setIsTyping(true)
     const { reply } = await generateResponse(text, intent!, distortion!, prompt!)
+    setIsTyping(false)
     addMessage(reply, 'Pebbles')
   }
 
@@ -43,14 +50,8 @@ export default function ChatPage() {
       <ChatMessages>
         {isLoading 
           ? <ChatMessageSkeletonList count={5} />
-          : messages.map(m => <ChatMessage key={m.id} msg={m} />)
-        }
-
-        {/* TODO: Integrate this with the actual message components */}
-        <TypingMessage>
-          <MessageSpinner />
-        </TypingMessage>
-
+          : messages.map(m => <ChatMessage key={m.id} msg={m} />)}
+        {isTyping && <ChatMessage />}
         <div ref={scrollRef} />
       </ChatMessages>
       <ChatInput value={input} onChange={setInput} onSubmit={handleSend} />
