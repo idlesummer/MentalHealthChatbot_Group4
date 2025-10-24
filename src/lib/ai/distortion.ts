@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 export const COGNITIVE_DISTORTION_KEYS = [
   "All-or-Nothing Thinking",
   "Overgeneralization",
@@ -38,6 +36,7 @@ export async function identifyCognitiveDistortions(message: string, classify: an
     "You are a CBT assistant.",
     "Classify the user's text into exactly one cognitive distortion from the provided list.",
     "If several apply, pick the best single fit.",
+    "If there aren't any that fit, choose 'none'.",
     "Return JSON matching the schema exactly.",
   ].join(" ");
 
@@ -49,7 +48,7 @@ export async function identifyCognitiveDistortions(message: string, classify: an
     },
   ]);
 
-  
+  console.log("RES: ", res);
   return res; 
 }
 

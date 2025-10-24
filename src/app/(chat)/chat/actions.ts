@@ -1,6 +1,6 @@
 'use server'
 import { ChatOpenAI } from '@langchain/openai'
-import { INTENT_PROMPTS } from '@/lib/ai/intent'
+import { INTENT_PROMPTS_FEWSHOT, computeNextIntent } from '@/lib/ai/intent'
 import { z } from 'zod'
 import { COGNITIVE_DISTORTION_KEYS, identifyCognitiveDistortions } from '@/lib/ai/distortion'
 
@@ -20,42 +20,25 @@ const classify = model.withStructuredOutput(
   })
 );
 
-export async function mockSendMessage(message: string) {
-  // Simulate network or processing delay
-  await new Promise(resolve => setTimeout(resolve, 800))
-
-  // Mock bot reply
-  const botReplies = [
-    'Got it!',
-    'That\'s interesting.',
-    'Can you tell me more?',
-    'Hmm, I see what you mean.',
-    'Let\'s think about that together.',
-  ]
-
-  const index = Math.floor(Math.random() * botReplies.length)
-  const reply = botReplies[index]
-  return { reply }
-}
-
-async function buildPrompt(message: string, intent: string, prompt: string): Promise<string> {
+async function buildPrompt(message: string, intent: string, prompt: string, messages: any): Promise<string> {
   const distortionIdentified = await identifyCognitiveDistortions(message, classify);
   const distortion = distortionIdentified.distortion;
-
-  console.log("Identified Distortion:", distortion);
+  const intentData = INTENT_PROMPTS_FEWSHOT[intent as keyof typeof INTENT_PROMPTS_FEWSHOT];
   return [
     `You are a CBT-based assistant helping the user manage their thoughts and emotions.`,
-    `Current CBT Stage: ${intent}.`,
+    `Use this conversation history to inform your response:\n${messages.map((m: any) => `${m.user}: ${m.text}`).join("\n")}`,
+    `Use the following guidelines for this stage:\n${intentData.system}`,
     `Identified Cognitive Distortion: ${distortion}.`,
-    `\nInstruction:\n${prompt}`,
     `\nUser Message:\n"${message}"`,
     `\nPlease respond in a way that aligns with the user's CBT stage and identified distortion.`,
   ].join("\n");
 }
 
-export async function generateResponse(message: string, intent: string, distortion: string, prompt: string) {
+export async function generateResponse(message: string, intent: string, distortion: string, prompt: string, messages: any) {
   // const response = "You are a supportive mental health assistant and the user just said: " + message + ". Respond with empathy and understanding.";
-  const response = await buildPrompt(message, intent, prompt);
+  const response = await buildPrompt(message, intent, prompt, messages);
+  console.log("FINAL PROMPT: ", response);
   const reply = await model.invoke(response); 
-  return { reply: reply.text };
+  const nextIntent = computeNextIntent(intent);
+  return { reply: reply.text, identifiedIntent: nextIntent };
 }

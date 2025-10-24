@@ -23,25 +23,20 @@ export default function ChatPage() {
 
   const messages = useChatStore(s => s.messages)
   const addMessage = useChatStore(s => s.addMessage)
-  const isLoading = useFakeLoading(1500)
-  const [isTyping, setIsTyping] = useState(false)
-  const scrollRef  = useScrollToBottom([messages, isLoading, isTyping])
-  
-  const [intent, setIntent] = useState<string | null>(null)
-  const [distortion, setDistortion] = useState<string | null>(null)
-  const [prompt, setPrompt] = useState<string | null>(null)
+  const scrollRef  = useScrollToBottom(messages.length)
+  const [intent, setIntent] = useState<string | null>("I1");
+  const [distortion, setDistortion] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState<string | null>(null);
+
   
   const handleSend = async () => {
-    clearInput()
-    const text = input.trim()
-    if (!text) return
-    addMessage(text, 'You')
-
-    await delay(rand(1000, 4000))
-    setIsTyping(true)
-    const { reply } = await generateResponse(text, intent!, distortion!, prompt!)
-    setIsTyping(false)
+    if (!input.trim()) return
+    addMessage(input, 'You')
+    console.log("MESSAGES: ", messages);
+    // Call the server action (this runs on the server)
+    const { reply, identifiedIntent } = await generateResponse(input, intent!, distortion!, prompt!, messages);
     addMessage(reply, 'Pebbles')
+    setIntent(identifiedIntent);
   }
 
   return (
