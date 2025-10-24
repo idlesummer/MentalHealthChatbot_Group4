@@ -97,7 +97,7 @@ type ChatInputProps = {
 
 export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && e.shiftKey) return
+    if (e.key !== 'Enter' || e.shiftKey) return
     e.preventDefault()
     onSubmit()
   }
