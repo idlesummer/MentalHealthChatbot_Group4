@@ -22,14 +22,14 @@ export function ChatHeader() {
   // TODO: Temporary
   const clearMessages = useChatMessagesStore(s => s.clearMessages)
   return (
-    <div className="flex flex-row items-center py-4 px-8 space-x-4 border-b">
-      <Avatar className="h-10 w-10 bg-muted">
+    <div className="flex flex-row items-center pt-4 px-8 space-x-4">
+      <Avatar className="h-10 w-10 bg-muted border-2 border-green-400">
         <AvatarImage src="/avatars/pebbles.svg" />
         <AvatarFallback>P</AvatarFallback>
       </Avatar>
       <div className="min-w-0">
         <h1 className="truncate text-base font-semibold">Pebbles the Pibble</h1>
-        <p className="text-xs text-green-500">Online</p>
+        <p className="text-xs text-green-400">Online</p>
       </div>
       <Button
         variant="secondary"
@@ -103,9 +103,9 @@ export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
   }
   return (
     <div className="p-0">
-      <div className="px-3 pt-1 pb-6 w-full">
+      <div className="px-3 pb-6 w-full">
         <form
-          onSubmit={e => e.preventDefault()}
+          onSubmit={e => { e.preventDefault(); onSubmit() }}
           className="flex gap-2"
         >
           <Textarea
