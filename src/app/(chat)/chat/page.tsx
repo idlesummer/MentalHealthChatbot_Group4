@@ -28,7 +28,6 @@ export default function ChatPage() {
 
   // Local State
   const [intent, setIntent] = useState<string | null>('I1')
-  const [distortion] = useState<string | null>(null)
   const [prompt] = useState<string | null>(null)
   
   // Send handler
@@ -41,11 +40,11 @@ export default function ChatPage() {
     await delay(rand(1000, 4000))
 
     setIsTyping(true)
-    const { reply, identifiedIntent } = await generateResponse(input, intent!, distortion!, prompt!, messages)
+    const { reply, identifiedIntent } = await generateResponse(input, intent!, prompt!, messages)
     setIsTyping(false)
 
     addMessage(reply, 'Pebbles')
-    setIntent(identifiedIntent)
+    setIntent(await identifiedIntent)
   }
 
   return (

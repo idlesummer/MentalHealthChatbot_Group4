@@ -20,6 +20,14 @@ const classify = model.withStructuredOutput(
   })
 );
 
+const determine = model.withStructuredOutput(
+  z.object({
+    moveToNextIntent: z.boolean(),
+    confidence: z.number().min(0).max(1),
+    reason: z.string(),
+  })
+);
+
 async function buildPrompt(message: string, intent: string, prompt: string, messages: any): Promise<string> {
   const distortionIdentified = await identifyCognitiveDistortions(message, classify);
   const distortion = distortionIdentified.distortion;
@@ -34,11 +42,10 @@ async function buildPrompt(message: string, intent: string, prompt: string, mess
   ].join("\n");
 }
 
-export async function generateResponse(message: string, intent: string, distortion: string, prompt: string, messages: any) {
-  // const response = "You are a supportive mental health assistant and the user just said: " + message + ". Respond with empathy and understanding.";
+export async function generateResponse(message: string, intent: string, prompt: string, messages: any) {
   const response = await buildPrompt(message, intent, prompt, messages);
-  console.log("FINAL PROMPT: ", response);
+  // console.log("FINAL PROMPT: ", response);
   const reply = await model.invoke(response); 
-  const nextIntent = computeNextIntent(intent);
+  const nextIntent = computeNextIntent(intent, determine, message);
   return { reply: reply.text, identifiedIntent: nextIntent };
 }
