@@ -1,8 +1,9 @@
 'use server'
 import { ChatOpenAI } from '@langchain/openai'
-import { INTENT_PROMPTS_FEWSHOT, computeNextIntent } from '@/lib/ai/intent'
+import { computeNextIntent } from '@/lib/ai/intent'
 import { z } from 'zod'
 import { COGNITIVE_DISTORTION_KEYS, identifyCognitiveDistortions } from '@/lib/ai/distortion'
+import { INTENT_PROMPTS_FEWSHOT } from '@/lib/blueprints/Fewshot'
 
 // All functions that call APIs is will be defined here
 
@@ -17,6 +18,15 @@ const classify = model.withStructuredOutput(
     distortion: z.enum(COGNITIVE_DISTORTION_KEYS),
     confidence: z.number().min(0).max(1),
     rationale: z.string(),
+  })
+);
+
+const SystemResponse = model.withStructuredOutput(
+  z.object({
+    response: z.string(),
+    moveToNextIntent: z.boolean(),
+    confidence: z.number().min(0).max(1),
+    reason: z.string(),
   })
 );
 
@@ -46,6 +56,6 @@ export async function generateResponse(message: string, intent: string, prompt: 
   const response = await buildPrompt(message, intent, prompt, messages);
   // console.log("FINAL PROMPT: ", response);
   const reply = await model.invoke(response); 
-  const nextIntent = computeNextIntent(intent, determine, message);
+  const nextIntent = computeNextIntent(intent, determine, message, messages);
   return { reply: reply.text, identifiedIntent: nextIntent };
 }
