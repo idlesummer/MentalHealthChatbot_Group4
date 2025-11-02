@@ -65,6 +65,14 @@ const classify = model.withStructuredOutput(
   })
 );
 
+const determine = model.withStructuredOutput(
+  z.object({
+    moveToNextIntent: z.boolean(),
+    confidence: z.number().min(0).max(1),
+    reason: z.string(),
+  })
+);
+
 async function buildPrompt(message: string, intent: string, prompt: string, messages: any): Promise<string> {
   const distortionIdentified = await identifyCognitiveDistortions(message, classify);
   const distortion = distortionIdentified.distortion;
@@ -79,12 +87,11 @@ async function buildPrompt(message: string, intent: string, prompt: string, mess
   ].join("\n");
 }
 
-export async function generateResponse(message: string, intent: string, distortion: string, prompt: string, messages: any) {
-  // const response = "You are a supportive mental health assistant and the user just said: " + message + ". Respond with empathy and understanding.";
+export async function generateResponse(message: string, intent: string, prompt: string, messages: any) {
   const response = await buildPrompt(message, intent, prompt, messages);
-  console.log("FINAL PROMPT: ", response);
+  // console.log("FINAL PROMPT: ", response);
   const reply = await model.invoke(response); 
-  const nextIntent = computeNextIntent(intent);
+  const nextIntent = computeNextIntent(intent, determine, message);
   return { reply: reply.text, identifiedIntent: nextIntent };
 }
 
@@ -139,7 +146,6 @@ export default function ChatPage() {
 
   // Local State
   const [intent, setIntent] = useState<string | null>('I1')
-  const [distortion] = useState<string | null>(null)
   const [prompt] = useState<string | null>(null)
   
   // Send handler
@@ -152,11 +158,11 @@ export default function ChatPage() {
     await delay(rand(1000, 4000))
 
     setIsTyping(true)
-    const { reply, identifiedIntent } = await generateResponse(input, intent!, distortion!, prompt!, messages)
+    const { reply, identifiedIntent } = await generateResponse(input, intent!, prompt!, messages)
     setIsTyping(false)
 
     addMessage(reply, 'Pebbles')
-    setIntent(identifiedIntent)
+    setIntent(await identifiedIntent)
   }
 
   return (
@@ -204,7 +210,7 @@ export function ChatHeader() {
   // TODO: Temporary
   const clearMessages = useChatMessagesStore(s => s.clearMessages)
   return (
-    <div className="flex flex-row items-center py-4 px-8 space-x-4 border-b">
+    <div className="flex flex-row items-center pt-4 px-8 space-x-4">
       <Avatar className="h-10 w-10 bg-muted border-2 border-green-400">
         <AvatarImage src="/avatars/pebbles.svg" />
         <AvatarFallback>P</AvatarFallback>
@@ -285,9 +291,9 @@ export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
   }
   return (
     <div className="p-0">
-      <div className="px-3 pt-1 pb-6 w-full">
+      <div className="px-3 pb-6 w-full">
         <form
-          onSubmit={e => {e.preventDefault(); onSubmit()}}
+          onSubmit={e => { e.preventDefault(); onSubmit() }}
           className="flex gap-2"
         >
           <Textarea
@@ -634,8 +640,60 @@ const INTENT_ROUTES: Record<string, string | null> = {
   I7: "I1",   // end
 };
 
-export function computeNextIntent(current: string): string | null {
-  return INTENT_ROUTES[current] ?? null;
+const COMPLETION_RULES: Record<string, string> = {
+  I1: "Complete if user described a specific situation/event with at least two concrete detail (what/when/where/who/impact).",
+  I2: "Complete if user stated an automatic thought (their self-talk line) tied to the situation.",
+  I3: "Complete if user provided a single intensity rating (number) or clearly-ranked intensity.",
+  I4: "Complete after user gives at least one 'for' reason and at least one 'against' reason.",
+  I5: "Complete if user articulated a believable, kinder, more balanced alternative thought.",
+  I6: "Complete if user re-rates mood or clearly describes shift (up/down/same).",
+  I7: "Complete if user acknowledges a coping step theyâ€™re willing to try and session can close.",
+};
+
+export async function computeNextIntent(
+  current: string,
+  model: any,
+  message: string
+): Promise<string | null> {
+  const intentData = INTENT_PROMPTS_FEWSHOT[
+    current as keyof typeof INTENT_PROMPTS_FEWSHOT
+  ];
+
+  const completionRule = COMPLETION_RULES[current] ?? "Decide completion conservatively but fairly.";
+  if (!intentData) {
+    console.warn(`[Intent] Unknown current intent: ${current}`);
+    return current;
+  }
+
+  const prompt = [
+    `You are an intent transition evaluator for a CBT chatbot.`,
+    `Current Intent: ${current} (${intentData.role})`,
+    `User message: "${message}"`,
+    ``,
+    `Return strictly this JSON: { moveToNextIntent: boolean, confidence: number (0â€“1), reason: string }`,
+    ``,
+    `DECISION RULE (authoritative): ${completionRule}`,
+    ``,
+    `Intent description (for context):`,
+    intentData.system,
+  ].join("\n");
+
+  try {
+    const response = await model.invoke(prompt);
+    console.log("ðŸ§­ NEXT INTENT DECISION:");
+    console.log(response);
+
+    const shouldAdvance = response.moveToNextIntent && response.confidence > 0.5;
+    const next = shouldAdvance ? INTENT_ROUTES[current] ?? null : current;
+
+    console.log(`âž¡ï¸ Move to: ${next} (confidence: ${response.confidence.toFixed(2)})`);
+    console.log(`Reason: ${response.reason}`);
+
+    return next;
+  } catch (err) {
+    console.error("[computeNextIntent] Error invoking model:", err);
+    return current;
+  }
 }
 
 export const INTENT_PROMPTS_FEWSHOT = {
