@@ -2,6 +2,21 @@ import { INTENT_PROMPTS_FEWSHOT } from "../blueprints/Fewshot";
 import { INTENT_PROMPTS_COT } from "../blueprints/ChainOfThought";
 import { INTENT_PROMPTS_PERSONA } from "../blueprints/Persona";
 
+export type IntentPromptConfig = {
+    role: string;
+    system: string;
+};
+
+export type IntentPromptMap =  Record<string, IntentPromptConfig>;
+
+
+export const CHOSEN_PROMPT: Record<string, IntentPromptMap | null> = {
+  "default": null,
+  "few-shot": INTENT_PROMPTS_FEWSHOT,
+  "chain-of-thought": INTENT_PROMPTS_COT,
+  "persona": INTENT_PROMPTS_PERSONA,
+}
+
 const INTENT_ROUTES: Record<string, string | null> = {
   I1: "I2",
   I2: "I3",
@@ -25,25 +40,29 @@ const COMPLETION_RULES: Record<string, string> = {
 };
 
 export async function computeNextIntent(
-  current: string,
+  currentIntent: string,
   model: any,
   message: string,
-  messages: any
+  messages: any,
+  prompt: string
 ): Promise<string | null> {
-  const intentData = INTENT_PROMPTS_FEWSHOT[
-    current as keyof typeof INTENT_PROMPTS_FEWSHOT
-  ];
+  const PROMPT_DATA = CHOSEN_PROMPT[prompt] as IntentPromptMap | null;
+  const intentData = PROMPT_DATA?.[currentIntent] ?? ({
+    role: "Default CBTT-base assistant",
+    system: "Use general CBT-based guidance to assist the user."
+  } as IntentPromptConfig);
 
-  const completionRule = COMPLETION_RULES[current] ?? "Decide completion conservatively but fairly.";
+
+  const completionRule = COMPLETION_RULES[currentIntent] ?? "Decide completion conservatively but fairly.";
   if (!intentData) {
-    console.warn(`[Intent] Unknown current intent: ${current}`);
-    return current;
+    console.warn(`[Intent] Unknown current intent: ${currentIntent}`);
+    return currentIntent;
   }
 
-  const prompt = [
+  const MainPrompt = [
     `You are an intent transition evaluator for a CBT chatbot.`,
     `Use the conversation history to inform your decision:\n${messages.map((m: any) => `${m.user}: ${m.text}`).join("\n")}`,
-    `Current Intent: ${current} (${intentData.role})`,
+    `Current Intent: ${currentIntent} (${intentData.role})`,
     `User message: "${message}"`,
     ``,
     `Return strictly this JSON: { moveToNextIntent: boolean, confidence: number (0–1), reason: string }`,
@@ -55,12 +74,12 @@ export async function computeNextIntent(
   ].join("\n");
 
   try {
-    const response = await model.invoke(prompt);
+    const response = await model.invoke(MainPrompt);
     console.log(" NEXT INTENT DECISION:");
     console.log(response);
 
     const shouldAdvance = response.moveToNextIntent && response.confidence > 0.5;
-    const next = shouldAdvance ? INTENT_ROUTES[current] ?? null : current;
+    const next = shouldAdvance ? INTENT_ROUTES[currentIntent] ?? null : currentIntent;
 
     console.log(`➡️ Move to: ${next} (confidence: ${response.confidence.toFixed(2)})`);
     console.log(`Reason: ${response.reason}`);
@@ -68,6 +87,6 @@ export async function computeNextIntent(
     return next;
   } catch (err) {
     console.error("[computeNextIntent] Error invoking model:", err);
-    return current;
+    return currentIntent;
   }
 }

@@ -13,6 +13,7 @@ import { useFakeLoading } from '@/hooks/use-fake-loading'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatInputStore } from '@/lib/store/chat-input'
 import { useChatMessagesStore } from '@/lib/store/chat-messages'
+import { usePromptStateStore } from '@/lib/blueprints/promptStore'
 import { delay, rand } from '@/lib/utils'
 import { generateResponse } from './actions'
 
@@ -20,6 +21,7 @@ export default function ChatPage() {
   // Stores
   const { input, setInput, clearInput } = useChatInputStore()
   const { messages, addMessage } = useChatMessagesStore()
+  const { promptTechnique } = usePromptStateStore();
 
   // UI Hooks
   const [isTyping, setIsTyping] = useState(false)
@@ -28,7 +30,6 @@ export default function ChatPage() {
 
   // Local State
   const [intent, setIntent] = useState<string | null>('I1')
-  const [prompt] = useState<string | null>(null)
   
   // Send handler
   const handleSend = async () => {
@@ -40,7 +41,7 @@ export default function ChatPage() {
     await delay(rand(1000, 4000))
 
     setIsTyping(true)
-    const { reply, identifiedIntent } = await generateResponse(input, intent!, prompt!, messages)
+    const { reply, identifiedIntent } = await generateResponse(input, intent!, promptTechnique, messages)
     setIsTyping(false)
 
     addMessage(reply, 'Pebbles')

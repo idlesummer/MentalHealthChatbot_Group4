@@ -10,6 +10,16 @@ import { cn, formatTimestamp } from '@/lib/utils'
 import type { KeyboardEvent, PropsWithChildren } from 'react'
 import type { Message } from '@/lib/types'
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+import { usePromptStateStore } from '@/lib/blueprints/promptStore'
+
 export function Chat({ children }: PropsWithChildren) {
   return (
     <div className="flex flex-col mx-auto h-full max-w-5xl bg-background shadow-sm rounded-2xl">
@@ -21,6 +31,8 @@ export function Chat({ children }: PropsWithChildren) {
 export function ChatHeader() {
   // TODO: Temporary
   const clearMessages = useChatMessagesStore(s => s.clearMessages)
+  const promptTechnique = usePromptStateStore((s) => s.promptTechnique)
+  const setPromptTechnique = usePromptStateStore(s => s.setPromptTechnique)
   return (
     <div className="flex flex-row items-center pt-4 px-8 space-x-4">
       <Avatar className="h-10 w-10 bg-muted border-2 border-green-400">
@@ -31,6 +43,25 @@ export function ChatHeader() {
         <h1 className="truncate text-base font-semibold">Pebbles the Pibble</h1>
         <p className="text-xs text-green-400">Online</p>
       </div>
+
+      <Select
+        value={promptTechnique}
+        onValueChange={(value: any) =>
+          setPromptTechnique(value as typeof promptTechnique)
+        }
+      >
+        <SelectTrigger className="w-44 ml-auto">
+          <SelectValue placeholder="Prompt technique" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="default">Default</SelectItem>
+          <SelectItem value="few-shot">Few-shot</SelectItem>
+          <SelectItem value="chain-of-thought">Chain-of-thought</SelectItem>
+          <SelectItem value="persona">Persona-based</SelectItem>
+          {/* <SelectItem value="plan-and-solve">Plan &amp; Solve</SelectItem> */}
+        </SelectContent>
+      </Select>
+
       <Button
         variant="secondary"
         size="icon"

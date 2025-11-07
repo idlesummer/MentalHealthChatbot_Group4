@@ -3,7 +3,7 @@ import { ChatOpenAI } from '@langchain/openai'
 import { computeNextIntent } from '@/lib/ai/intent'
 import { z } from 'zod'
 import { COGNITIVE_DISTORTION_KEYS, identifyCognitiveDistortions } from '@/lib/ai/distortion'
-import { INTENT_PROMPTS_FEWSHOT } from '@/lib/blueprints/Fewshot'
+import { CHOSEN_PROMPT, IntentPromptMap, IntentPromptConfig } from '@/lib/ai/intent' 
 
 // All functions that call APIs is will be defined here
 
@@ -41,7 +41,15 @@ const determine = model.withStructuredOutput(
 async function buildPrompt(message: string, intent: string, prompt: string, messages: any): Promise<string> {
   const distortionIdentified = await identifyCognitiveDistortions(message, classify);
   const distortion = distortionIdentified.distortion;
-  const intentData = INTENT_PROMPTS_FEWSHOT[intent as keyof typeof INTENT_PROMPTS_FEWSHOT];
+  const PROMPT_DATA = CHOSEN_PROMPT[prompt] as IntentPromptMap | null;
+  const intentData = PROMPT_DATA?.[intent] ?? ({
+    role: "Default CBTT-base assistant",
+    system: "Use general CBT-based guidance to assist the user."
+  } as IntentPromptConfig);
+
+  console.log("PROMPT DATA: \n", PROMPT_DATA);
+  console.log("intentData: \n", intentData);
+  ;
   return [
     `You are a CBT-based assistant helping the user manage their thoughts and emotions.`,
     `Use this conversation history to inform your response:\n${messages.map((m: any) => `${m.user}: ${m.text}`).join("\n")}`,
@@ -54,8 +62,8 @@ async function buildPrompt(message: string, intent: string, prompt: string, mess
 
 export async function generateResponse(message: string, intent: string, prompt: string, messages: any) {
   const response = await buildPrompt(message, intent, prompt, messages);
-  // console.log("FINAL PROMPT: ", response);
+  console.log("FINAL PROMPT: ", response);
   const reply = await model.invoke(response); 
-  const nextIntent = computeNextIntent(intent, determine, message, messages);
+  const nextIntent = computeNextIntent(intent, determine, message, messages, prompt);
   return { reply: reply.text, identifiedIntent: nextIntent };
 }
