@@ -1,6 +1,8 @@
 import { INTENT_PROMPTS_FEWSHOT } from "../blueprints/Fewshot";
 import { INTENT_PROMPTS_COT } from "../blueprints/ChainOfThought";
 import { INTENT_PROMPTS_PERSONA } from "../blueprints/Persona";
+import { INTENT_PROMPTS_PAS } from "../blueprints/PlanAndSolve";
+
 
 export type IntentPromptConfig = {
     role: string;
