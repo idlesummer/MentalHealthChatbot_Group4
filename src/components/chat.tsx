@@ -58,6 +58,7 @@ export function ChatHeader() {
           <SelectItem value="few-shot">Few-shot</SelectItem>
           <SelectItem value="chain-of-thought">Chain-of-thought</SelectItem>
           <SelectItem value="persona">Persona-based</SelectItem>
+          <SelectItem value="plan-and-solve">Plan-and-solve</SelectItem>
           {/* <SelectItem value="plan-and-solve">Plan &amp; Solve</SelectItem> */}
         </SelectContent>
       </Select>

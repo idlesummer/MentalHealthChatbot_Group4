@@ -5,6 +5,7 @@ export type PromptTechnique =
   | "few-shot"
   | "chain-of-thought"
   | "persona"
+  | "plan-and-solve"
 
 interface PromptState {
     promptTechnique: PromptTechnique

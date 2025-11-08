@@ -17,6 +17,7 @@ export const CHOSEN_PROMPT: Record<string, IntentPromptMap | null> = {
   "few-shot": INTENT_PROMPTS_FEWSHOT,
   "chain-of-thought": INTENT_PROMPTS_COT,
   "persona": INTENT_PROMPTS_PERSONA,
+  "plan-and-solve": INTENT_PROMPTS_PAS
 }
 
 const INTENT_ROUTES: Record<string, string | null> = {
