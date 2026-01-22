@@ -64,6 +64,6 @@ export async function generateResponse(message: string, intent: string, prompt: 
   const response = await buildPrompt(message, intent, prompt, messages);
   console.log("FINAL PROMPT: ", response);
   const reply = await model.invoke(response); 
-  const nextIntent = computeNextIntent(intent, determine, message, messages, prompt);
+  const nextIntent = await computeNextIntent(intent, determine, message, messages, prompt);
   return { reply: reply.text, identifiedIntent: nextIntent };
 }
