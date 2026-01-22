@@ -20,6 +20,8 @@ export const CHOSEN_PROMPT: Record<string, IntentPromptMap | null> = {
   "plan-and-solve": INTENT_PROMPTS_PAS
 }
 
+export type Intent = 'I1' | 'I2' | 'I3' | 'I4' | 'I5' | 'I6' | 'I7' | 'I8';
+
 const INTENT_ROUTES: Record<string, string | null> = {
   I1: "I2",
   I2: "I3",
@@ -48,7 +50,7 @@ export async function computeNextIntent(
   message: string,
   messages: any,
   prompt: string
-): Promise<string | null> {
+): Promise<string> {
   const PROMPT_DATA = CHOSEN_PROMPT[prompt] as IntentPromptMap | null;
   const intentData = PROMPT_DATA?.[currentIntent] ?? ({
     role: "Default CBTT-base assistant",
@@ -83,7 +85,7 @@ export async function computeNextIntent(
     console.log(response);
 
     const shouldAdvance = response.moveToNextIntent && response.confidence > 0.5;
-    const next = shouldAdvance ? INTENT_ROUTES[currentIntent] ?? null : currentIntent;
+    const next = shouldAdvance ? (INTENT_ROUTES[currentIntent] ?? currentIntent) : currentIntent;
 
     console.log(`➡️ Move to: ${next} (confidence: ${response.confidence.toFixed(2)})`);
     console.log(`Reason: ${response.reason}`);
