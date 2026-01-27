@@ -1,0 +1,22 @@
+{
+  "name": "cogni-technique-comparison-example",
+  "version": "1.0.0",
+  "description": "Compare all 4 prompt engineering techniques side-by-side",
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts"
+  },
+  "keywords": ["cogni", "cbt", "example", "prompting", "comparison"],
+  "author": "Mental Health Chatbot Team",
+  "license": "MIT",
+  "dependencies": {
+    "@langchain/openai": "^0.3.14",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
