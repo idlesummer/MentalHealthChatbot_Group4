@@ -10,7 +10,7 @@
 import 'dotenv/config';
 import { ChatOpenAI } from '@langchain/openai';
 import { z } from 'zod';
-import { CogniEngine, COGNITIVE_DISTORTION_KEYS } from '../../../src/cogni/src/index.js';
+import { CogniEngine, COGNITIVE_DISTORTION_KEYS } from '../../src/index.js';
 
 // ============================================================================
 // SETUP

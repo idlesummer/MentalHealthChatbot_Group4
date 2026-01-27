@@ -18,7 +18,7 @@ import {
   CogniEngine,
   COGNITIVE_DISTORTION_KEYS,
   type PromptTechnique,
-} from '../../../src/cogni/src/index.js';
+} from '../../src/index.js';
 
 // ============================================================================
 // SETUP

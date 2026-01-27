@@ -14,7 +14,7 @@ import { z } from 'zod';
 import {
   CogniEngine,
   COGNITIVE_DISTORTION_KEYS,
-} from '../../../src/cogni/src/index.js';
+} from '../../src/index.js';
 
 // ============================================================================
 // SETUP
