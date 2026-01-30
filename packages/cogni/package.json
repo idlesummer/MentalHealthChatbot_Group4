@@ -1,5 +1,5 @@
 {
-  "name": "@idlesummer/cogni",
+  "name": "@rainev/cogni",
   "version": "0.1.0",
   "description": "LLM-powered cognitive behavioral therapy framework for building mental health applications",
   "keywords": [
@@ -10,10 +10,10 @@
     "thought-challenging",
     "ai-therapy"
   ],
-  "homepage": "https://github.com/idlesummer/cogni#readme",
+  "homepage": "https://github.com/rainev/cogni#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/idlesummer/cogni.git"
+    "url": "https://github.com/rainev/cogni.git"
   },
   "license": "MIT",
   "author": "idlesummer <09louisthebob@gmail.com> (https://github.com/idlesummer)",

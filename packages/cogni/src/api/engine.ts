@@ -50,7 +50,7 @@ export interface ComputeNextIntentParams {
  * @example
  * ```typescript
  * import { ChatOpenAI } from '@langchain/openai'
- * import { CogniEngine } from '@idlesummer/cogni'
+ * import { CogniEngine } from '@rainev/cogni'
  *
  * const model = new ChatOpenAI({ model: 'gpt-4o-mini' })
  * const engine = new CogniEngine(model)

@@ -14,7 +14,7 @@
   "author": "Mental Health Chatbot Team",
   "license": "MIT",
   "dependencies": {
-    "@idlesummer/cogni": "file:../..",
+    "@rainev/cogni": "file:../..",
     "@langchain/openai": "^1.2.3",
     "dotenv": "^17.2.3",
     "langchain": "^1.2.13",

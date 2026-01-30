@@ -19,7 +19,7 @@ A comprehensive guide to understanding how the Cogni CBT engine works, from the 
 
 ```typescript
 import { ChatOpenAI } from '@langchain/openai'
-import { CogniEngine } from '@idlesummer/cogni'
+import { CogniEngine } from '@rainev/cogni'
 
 // 1. Create an LLM model
 const model = new ChatOpenAI({ model: 'gpt-4o-mini' })
