@@ -4,6 +4,7 @@
   "description": "Basic usage example of the Cogni CBT Engine",
   "type": "module",
   "scripts": {
+    "build:cogni": "npm run build --prefix ../..",
     "start": "tsx index.ts"
   },
   "keywords": [

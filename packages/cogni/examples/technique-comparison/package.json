@@ -4,8 +4,8 @@
   "description": "Compare all 4 prompt engineering techniques side-by-side",
   "type": "module",
   "scripts": {
-    "start": "tsx index.ts",
-    "dev": "tsx watch index.ts"
+    "build:cogni": "npm run build --prefix ../..",
+    "start": "tsx index.ts"
   },
   "keywords": ["cogni", "cbt", "example", "prompting", "comparison"],
   "author": "Mental Health Chatbot Team",

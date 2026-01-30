@@ -4,8 +4,8 @@
   "description": "Complete CBT session example showing all 8 intents",
   "type": "module",
   "scripts": {
-    "start": "tsx index.ts",
-    "dev": "tsx watch index.ts"
+    "build:cogni": "npm run build --prefix ../..",
+    "start": "tsx index.ts"
   },
   "keywords": ["cogni", "cbt", "example", "full-session"],
   "author": "Mental Health Chatbot Team",
