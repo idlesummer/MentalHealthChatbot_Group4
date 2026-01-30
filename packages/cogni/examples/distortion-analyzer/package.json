@@ -4,8 +4,8 @@
   "description": "Analyze cognitive distortions in multiple messages",
   "type": "module",
   "scripts": {
-    "start": "tsx index.ts",
-    "dev": "tsx watch index.ts"
+    "build:cogni": "npm run build --prefix ../..",
+    "start": "tsx index.ts"
   },
   "keywords": ["cogni", "cbt", "example", "cognitive-distortions", "analysis"],
   "author": "Mental Health Chatbot Team",

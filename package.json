@@ -11,6 +11,7 @@
     "apps/*"
   ],
   "scripts": {
+    "build:cogni": "npm run build --prefix ../..",
     "build": "npm -ws --if-present run build",
     "lint": "npm -ws --if-present run lint",
     "test": "npm -ws --if-present run test"

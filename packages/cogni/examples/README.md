@@ -14,7 +14,7 @@ The simplest introduction to Cogni - shows how to:
 
 ```bash
 cd basic-usage
-npm install
+npm run build:cogni
 cp .env.example .env  # Add your OPENAI_API_KEY
 npm start
 ```
@@ -41,7 +41,7 @@ Demonstrates a complete therapeutic conversation through all 8 CBT stages:
 
 ```bash
 cd complete-session
-npm install
+npm run build:cogni
 cp .env.example .env  # Add your OPENAI_API_KEY
 npm start
 ```
@@ -65,7 +65,7 @@ Compares all 4 prompt engineering techniques side-by-side:
 
 ```bash
 cd technique-comparison
-npm install
+npm run build:cogni
 cp .env.example .env  # Add your OPENAI_API_KEY
 npm start
 ```
@@ -94,7 +94,7 @@ Analyzes messages to identify the 10 cognitive distortions:
 
 ```bash
 cd distortion-analyzer
-npm install
+npm run build:cogni
 cp .env.example .env  # Add your OPENAI_API_KEY
 npm start
 ```
@@ -116,7 +116,7 @@ npm start
 
 2. **Install dependencies:**
    ```bash
-   npm install
+   npm run build:cogni
    ```
 
 3. **Configure environment:**
@@ -209,7 +209,7 @@ All examples require:
 
 3. **Dependencies**
    ```bash
-   npm install  # In each example directory
+   npm run build:cogni  # In each example directory
    ```
 
 ---
@@ -251,13 +251,13 @@ intent: "I2"  // Start at a different stage
 → Make sure you copied `.env.example` to `.env` and added your key
 
 ### "Module not found"
-→ Run `npm install` in the example directory
+→ Run `npm run build:cogni` in the example directory
 
 ### "tsx command not found"
 → The package.json should install tsx as a dev dependency. Try:
 ```bash
 rm -rf node_modules package-lock.json
-npm install
+npm run build:cogni
 ```
 
 ### Rate Limit Errors
