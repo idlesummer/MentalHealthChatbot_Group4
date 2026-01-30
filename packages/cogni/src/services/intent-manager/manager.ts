@@ -39,6 +39,16 @@ export class IntentManager {
   private stateMachine: StateMachine<string, string, Message[], IntentTransition, string>
   private intentEvaluator: Runnable
   private config: IntentManagerConfig
+  private intentCounts: Record<Intent, number> = {
+    I1: 0,
+    I2: 0,
+    I3: 0,
+    I4: 0,
+    I5: 0,
+    I6: 0,
+    I7: 0,
+    I8: 0,
+  }
 
   constructor(config: IntentManagerConfig) {
     this.config = config
@@ -74,7 +84,13 @@ export class IntentManager {
   /** Compute the next intent based on current state */
   async computeNextIntent(intent: Intent, message: string, conversation: Message[]) {
     try {
-      return (await this.stateMachine.step(intent, message, conversation)).nextState
+      const result = await this.stateMachine.step(intent, message, conversation)
+
+      // Track intent usage for analytics
+      this.intentCounts[result.nextState as Intent]++
+      console.log('Intent counts:', this.intentCounts)
+
+      return result.nextState
 
     } catch (err) {
       console.error('[IntentManager.computeNextIntent] Error invoking model:', err)
@@ -109,5 +125,24 @@ export class IntentManager {
   /** Get the next intent in the routing sequence */
   getNextIntentRoute(intent: Intent) {
     return INTENT_ROUTE_REGISTRY[intent] ?? null
+  }
+
+  /** Get the current intent count statistics */
+  getIntentCounts(): Readonly<Record<Intent, number>> {
+    return { ...this.intentCounts }
+  }
+
+  /** Reset intent counts (useful when starting a new session) */
+  resetIntentCounts(): void {
+    this.intentCounts = {
+      I1: 0,
+      I2: 0,
+      I3: 0,
+      I4: 0,
+      I5: 0,
+      I6: 0,
+      I7: 0,
+      I8: 0,
+    }
   }
 }

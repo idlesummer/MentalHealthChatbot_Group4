@@ -142,6 +142,16 @@ export class CogniEngine {
   getPromptTechniques() {
     return PROMPT_TECHNIQUES
   }
+
+  /** Get intent count statistics for analytics */
+  getIntentCounts() {
+    return this.services.intentManager.getIntentCounts()
+  }
+
+  /** Reset intent counts (useful when starting a new session) */
+  resetIntentCounts() {
+    return this.services.intentManager.resetIntentCounts()
+  }
 }
 
 /**
