@@ -1,0 +1,21 @@
+{
+  "name": "cogni-monorepo",
+  "private": true,
+  "homepage": "https://github.com/rainev/cogni#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rainev/cogni.git"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm -ws --if-present run build",
+    "lint": "npm -ws --if-present run lint",
+    "test": "npm -ws --if-present run test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

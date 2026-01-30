@@ -1,0 +1,71 @@
+{
+  "name": "@idlesummer/cogni",
+  "version": "0.1.0",
+  "description": "LLM-powered cognitive behavioral therapy framework for building mental health applications",
+  "keywords": [
+    "cbt",
+    "cognitive-therapy",
+    "mental-health",
+    "llm",
+    "thought-challenging",
+    "ai-therapy"
+  ],
+  "homepage": "https://github.com/idlesummer/cogni#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/idlesummer/cogni.git"
+  },
+  "license": "MIT",
+  "author": "idlesummer <09louisthebob@gmail.com> (https://github.com/idlesummer)",
+  "contributors": [
+    "lettertoelias <> (https://github.com/lettertoelias)",
+    "rainev <> (https://github.com/rainev)",
+    "saac03 <> (https://github.com/saac03)"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "workspaces": [
+    "examples/*"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "lint": "eslint",
+    "prepare": "npm run build",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.17",
+    "@langchain/openai": "^1.2.3",
+    "dedent": "^1.7.1",
+    "langchain": "^1.2.13",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^25.0.10",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.39.2",
+    "globals": "^17.1.0",
+    "tsdown": "^0.20.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.53.1",
+    "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "@langchain/core": "^1.1.17",
+    "@langchain/openai": "^1.2.3",
+    "langchain": "^1.2.13"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

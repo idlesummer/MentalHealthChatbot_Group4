@@ -1,0 +1,23 @@
+{
+  "name": "cogni-basic-usage-example",
+  "version": "1.0.0",
+  "description": "Basic usage example of the Cogni CBT Engine",
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "keywords": [
+    "cogni",
+    "cbt",
+    "example"
+  ],
+  "author": "Mental Health Chatbot Team",
+  "license": "MIT",
+  "dependencies": {
+    "@idlesummer/cogni": "file:../..",
+    "@langchain/openai": "^1.2.3",
+    "dotenv": "^17.2.3",
+    "langchain": "^1.2.13",
+    "tsx": "^4.21.0"
+  }
+}
