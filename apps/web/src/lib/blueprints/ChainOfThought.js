@@ -1,6 +1,6 @@
 export const INTENT_PROMPTS_COT= {
   I1: {
-    role: "Situation Identification",
+    role: 'Situation Identification',
     system: `
       Role: You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework.
       Current Goal: Complete Step 1: Situation Identification (I1) — help the user describe the situation causing stress, worry, or discomfort.
@@ -36,7 +36,7 @@ export const INTENT_PROMPTS_COT= {
   },
 
   I2: {
-    role: "Automatic Thought Identification",
+    role: 'Automatic Thought Identification',
     system: `
       Role: You are a mental health chatbot that follows a 7-step CBT framework.
       Current Goal: Complete Step 2: Automatic Thought Identification (I2) — help the user articulate the automatic thoughts they experienced in response to the previously identified stressful situation.
@@ -79,7 +79,7 @@ export const INTENT_PROMPTS_COT= {
   },
 
   I3: {
-    role: "Mood Rating",
+    role: 'Mood Rating',
     system: `
       Role: You are a mental health chatbot that follows a 7-step CBT framework.
       Current Goal: Step 3: Mood Rating (I3)  help the user describe the strength and intensity of their emotions connected to their automatic thought.
@@ -122,7 +122,7 @@ export const INTENT_PROMPTS_COT= {
   },
 
     I4: {
-      role: "Evidence For",
+      role: 'Evidence For',
       system: `
         Role: You are a mental health chatbot that follows a 7-step CBT framework.
         Current Goal: Complete Step 4: Evidence For (I4) — help the user explore why their automatic thought might feel true to them.
@@ -153,7 +153,7 @@ export const INTENT_PROMPTS_COT= {
   },
 
   I5: {
-    role: "Evidence Against",
+    role: 'Evidence Against',
     system: `
       Role: You are a mental health chatbot that follows a 7-step CBT framework.
       Current Goal: Complete Step 5: Evidence Against (I5) — gently guide the user to explore reasons why their automatic thought may not be completely accurate.
@@ -183,7 +183,7 @@ export const INTENT_PROMPTS_COT= {
   },
 
   I6: {
-    role: "Alternative Thought Generation",
+    role: 'Alternative Thought Generation',
     system: `
       Role: You are a mental health chatbot that follows a 7-step CBT framework.
       Current Goal: Step 6: Alternative Thought Formulation (I5) — guide the user to form a more balanced, compassionate, or constructive perspective that responds to their earlier automatic thought.
@@ -225,7 +225,7 @@ export const INTENT_PROMPTS_COT= {
   },
 
   I7: {
-    role: "Mood re-rating",
+    role: 'Mood re-rating',
     system: `
       Role: You are a mental health chatbot that follows a 7-step CBT framework.
       Current Goal: Step 7: Mood Re-Rating (I3 revisited) — help the user reflect on how their feelings may have shifted after developing their alternative thought.
@@ -266,7 +266,7 @@ export const INTENT_PROMPTS_COT= {
   },
 
   I8: {
-    role: "Coping Strategy Recommendation",
+    role: 'Coping Strategy Recommendation',
     system: `
       Role: You are a mental health chatbot that follows a 7-step CBT framework.
       Current Goal: Step 8: Coping Strategy (I7) — offer the user a simple, personalized coping strategy that supports the alternative thought they formed and helps them manage similar situations in the future.
@@ -303,5 +303,5 @@ export const INTENT_PROMPTS_COT= {
       Action: Reassure the user and heavily encourage them to check back (“Maybe we can come back and go over your feelings again some other day?)
 
       `.trim(),
-  }
-};
+  },
+}

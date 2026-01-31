@@ -1,6 +1,6 @@
 export const INTENT_PROMPTS_FEWSHOT = {
   I1: {
-    role: "Situation Identification",
+    role: 'Situation Identification',
     system: `
       You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework. Your current goal is to complete Step 1: Situation Identification (I1) — to help the user describe the situation that is causing them stress, worry, or discomfort. 
       Start the conversation first by introduing yourself as a chatbot that aims to help the user with their struggles. Give the user a bit more 
@@ -53,7 +53,7 @@ export const INTENT_PROMPTS_FEWSHOT = {
   },
 
   I2: {
-    role: "Automatic Thought Identification",
+    role: 'Automatic Thought Identification',
     system: `
       You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework. 
       Your current goal is Step 2: Automatic Thought Identification (I2) — to help the user recognize and articulate the automatic thoughts that appeared in response to the stressful situation they described earlier.
@@ -107,7 +107,7 @@ export const INTENT_PROMPTS_FEWSHOT = {
   },
 
   I3: {
-    role: "Mood Rating",
+    role: 'Mood Rating',
     system: `
       You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework. 
       Your current goal is Step 3: Mood Rating (I3) — to understand how intense the user’s emotions felt when they experienced their automatic thought. 
@@ -148,7 +148,7 @@ export const INTENT_PROMPTS_FEWSHOT = {
   },
 
   I4: {
-    role: "Evidence For",
+    role: 'Evidence For',
     system: `
       You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework.
       Your current goal is Step 4: Evidence For — to help the user reflect on *why* their automatic thought felt believable or true at the time.
@@ -177,7 +177,7 @@ export const INTENT_PROMPTS_FEWSHOT = {
   },
 
   I5: {
-    role: "Evidence Against",
+    role: 'Evidence Against',
     system: `
       You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework.
       Your current goal is Step 5: Evidence Against — to help the user look at their automatic thought from another angle and identify reasons it might *not* be completely true.
@@ -212,7 +212,7 @@ export const INTENT_PROMPTS_FEWSHOT = {
   },
 
   I6: {
-    role: "Alternative Thought Generation",
+    role: 'Alternative Thought Generation',
     system: `
       You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework. 
       Your current goal is to complete Step 6: Alternative Thought Formulation (I5) — to help the user form a more balanced, compassionate, or 
@@ -251,7 +251,7 @@ export const INTENT_PROMPTS_FEWSHOT = {
   },
 
   I7: {
-    role: "Mood re-rating",
+    role: 'Mood re-rating',
     system: `
       You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework. 
       Your current goal is to complete Step 7: Mood Re-Rating (I3 revisited) — to help the user reflect on how their feelings 
@@ -294,7 +294,7 @@ export const INTENT_PROMPTS_FEWSHOT = {
   },
 
   I8: {
-    role: "Coping Strategy Recommendation",
+    role: 'Coping Strategy Recommendation',
     system: `
       You are a mental health chatbot that follows a 7-step Cognitive Behavioral Therapy (CBT) framework. 
       Your current goal is to complete Step 8: Coping Strategy (I7) — to offer the user a simple, personalized coping strategy that supports the alternative thought they formed and helps them manage similar situations in the future. 
@@ -328,5 +328,5 @@ export const INTENT_PROMPTS_FEWSHOT = {
       It can help anchor you during stressful moments. 
       
       `.trim(),
-  }
-};
+  },
+}

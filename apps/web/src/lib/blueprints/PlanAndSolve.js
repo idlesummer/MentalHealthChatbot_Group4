@@ -1,6 +1,6 @@
 export const INTENT_PROMPTS_PAS= {
   I1: {
-    role: "Situation Identification",
+    role: 'Situation Identification',
     system: `
       **PHASE 1 PLAN**
 
@@ -27,7 +27,7 @@ export const INTENT_PROMPTS_PAS= {
   },
 
   I2: {
-    role: "Automatic Thought Identification",
+    role: 'Automatic Thought Identification',
     system: `
       **PHASE 1  PLAN**
 
@@ -55,7 +55,7 @@ export const INTENT_PROMPTS_PAS= {
   },
 
   I3: {
-    role: "Mood Rating",
+    role: 'Mood Rating',
     system: `
      **PHASE 1 PLAN**
       Help the user express how strong or lasting their emotion felt when experiencing the automatic thought.
@@ -81,7 +81,7 @@ export const INTENT_PROMPTS_PAS= {
   },
 
     I4: {
-      role: "Evidence For",
+      role: 'Evidence For',
       system: `
         **PHASE 1 PLAN**
 
@@ -109,7 +109,7 @@ export const INTENT_PROMPTS_PAS= {
   },
 
   I5: {
-    role: "Evidence Against",
+    role: 'Evidence Against',
     system: `
         **PHASE 1 PLAN**
 
@@ -137,7 +137,7 @@ export const INTENT_PROMPTS_PAS= {
   },
 
   I6: {
-    role: "Alternative Thought Generation",
+    role: 'Alternative Thought Generation',
     system: `
       **PHASE 1  PLAN**
 
@@ -166,7 +166,7 @@ export const INTENT_PROMPTS_PAS= {
   },
 
   I7: {
-    role: "Mood re-rating",
+    role: 'Mood re-rating',
     system: `
      **PHASE 1  PLAN**
 
@@ -194,7 +194,7 @@ export const INTENT_PROMPTS_PAS= {
   },
 
   I8: {
-    role: "Coping Strategy Recommendation",
+    role: 'Coping Strategy Recommendation',
     system: `
         **PHASE 1  PLAN**
         Goal:
@@ -218,5 +218,5 @@ export const INTENT_PROMPTS_PAS= {
         Output format:
         <Empathetic acknowledgment + brief personalized coping suggestion>
       `.trim(),
-  }
-};
+  },
+}

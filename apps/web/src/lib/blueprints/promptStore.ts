@@ -1,11 +1,11 @@
-import { create } from "zustand"
+import { create } from 'zustand'
 
 export type PromptTechnique = 
-  | "default"
-  | "few-shot"
-  | "chain-of-thought"
-  | "persona"
-  | "plan-and-solve"
+  | 'default'
+  | 'few-shot'
+  | 'chain-of-thought'
+  | 'persona'
+  | 'plan-and-solve'
 
 interface PromptState {
     promptTechnique: PromptTechnique
@@ -13,6 +13,6 @@ interface PromptState {
 }
 
 export const usePromptStateStore = create<PromptState> ((set) => ({
-    promptTechnique: "default",
+    promptTechnique: 'default',
     setPromptTechnique: (promptTechnique) => set({ promptTechnique }),
 }))

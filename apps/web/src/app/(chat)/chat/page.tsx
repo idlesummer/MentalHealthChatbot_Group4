@@ -23,7 +23,7 @@ export default function ChatPage() {
   // Stores
   const { input, setInput, clearInput } = useChatInputStore()
   const { messages, addMessage } = useChatMessagesStore()
-  const { promptTechnique } = usePromptStateStore();
+  const { promptTechnique } = usePromptStateStore()
 
   // UI Hooks
   const [isTyping, setIsTyping] = useState(false)
@@ -54,10 +54,10 @@ export default function ChatPage() {
 
     setIsTyping(true)
     const { reply, identifiedIntent } = await generateResponse(input, intent!, promptTechnique, messages)
-    console.log("Identified Intent: ", identifiedIntent);
+    console.log('Identified Intent: ', identifiedIntent)
     setIntentCount(prev => ({
       ...prev,
-      [identifiedIntent as Intent]: (prev[identifiedIntent as Intent] ?? 0)  + 1
+      [identifiedIntent as Intent]: (prev[identifiedIntent as Intent] ?? 0)  + 1,
     }))
 
     
@@ -69,7 +69,7 @@ export default function ChatPage() {
   }
   
   useEffect(() => {
-    console.log("intentCount changed:", intentCount)
+    console.log('intentCount changed:', intentCount)
   }, [intentCount])
 
   return (
