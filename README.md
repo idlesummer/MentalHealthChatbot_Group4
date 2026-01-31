@@ -1,12 +1,4 @@
-You should update this README to reflect **pnpm as the package manager** and **monorepo-first workflows**, while still keeping it friendly for people who want to use `packages/cogni` standalone.
-
-Below is a **clean, modern, pnpm-correct rewrite** with minimal disruption to your intent.
-
-You do **not** need to explain pnpm internals—just correct commands and expectations.
-
----
-
-# Mental Health Chatbot – Group 4
+# Cogni Monorepo
 
 A monorepo containing the **Cogni** CBT engine and related applications for building mental health chatbot systems.
 
