@@ -32,9 +32,6 @@
   "files": [
     "dist"
   ],
-  "workspaces": [
-    "examples/*"
-  ],
   "scripts": {
     "build": "tsdown",
     "lint": "eslint",
