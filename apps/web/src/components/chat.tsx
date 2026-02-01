@@ -67,7 +67,7 @@ export function ChatHeader() {
         variant="secondary"
         size="icon"
         onClick={clearMessages}
-        className="ml-auto rounded-full" 
+        className="ml-auto rounded-full"
       >
         <Trash2 />
       </Button>
@@ -103,13 +103,13 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
         <div className={cn(
           'px-3 py-2 max-w-[50rem] rounded-lg',
-          isUser 
-            ? 'bg-primary text-primary-foreground rounded-br-none' 
+          isUser
+            ? 'bg-primary text-primary-foreground rounded-br-none'
             : 'bg-muted text-foreground rounded-bl-none',
         )}>
-          <p className="text-sm whitespace-pre-wrap break-words">
-            {hasText 
-              ? msg.text 
+          <p className="text-sm whitespace-pre-wrap wrap-break-word">
+            {hasText
+              ? msg.text
               : <MessageSpinner />}
           </p>
         </div>
