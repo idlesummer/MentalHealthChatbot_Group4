@@ -12,8 +12,9 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
-    // Ignore shadcn components (third-party code):
+    // Ignore shadcn components and hooks (third-party code):
     'src/components/ui/**',
+    'src/hooks/use-mobile.ts',
   ]),
 
   // Personal style
