@@ -1,6 +1,6 @@
 'use server'
 import { ChatOpenAI } from '@langchain/openai'
-import { CogniEngine, type Intent, type PromptTechnique } from '@rainev/cogni'
+import { CogniEngine, type Intent, type PromptTechnique, type Message } from '@rainev/cogni'
 
 // All functions that call APIs is will be defined here
 
@@ -17,7 +17,7 @@ export async function generateResponse(
   message: string,
   intent: Intent,
   technique: PromptTechnique,
-  messages: any[],
+  messages: Message[]
 ) {
   // Call the cogni engine with the user's message
   const result = await engine.respond({

@@ -46,7 +46,7 @@ export function ChatHeader() {
 
       <Select
         value={promptTechnique}
-        onValueChange={(value: any) =>
+        onValueChange={(value: string) =>
           setPromptTechnique(value as typeof promptTechnique)
         }
       >
