@@ -8,7 +8,7 @@ import { useChatMessagesStore } from '@/lib/store/chat-messages'
 import { cn, formatTimestamp } from '@/lib/utils'
 
 import type { KeyboardEvent, PropsWithChildren } from 'react'
-import type { Message } from '@/lib/types'
+import type { Message } from '@rainev/cogni'
 
 import {
   Select,

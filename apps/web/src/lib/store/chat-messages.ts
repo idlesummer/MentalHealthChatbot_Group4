@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Message } from '@/lib/types'
+import type { Message } from '@rainev/cogni'
 
 type ChatMessagesState = {
   messages: Message[]
