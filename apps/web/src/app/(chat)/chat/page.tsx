@@ -16,7 +16,7 @@ import { useChatMessagesStore } from '@/lib/store/chat-messages'
 import { usePromptStateStore } from '@/lib/blueprints/promptStore'
 import { delay, rand } from '@/lib/utils'
 import { generateResponse } from './actions'
-import { Intent } from '@/lib/ai/intent'
+import { type Intent } from '@rainev/cogni'
 import { useEffect } from 'react'
 
 export default function ChatPage() {
@@ -41,7 +41,7 @@ export default function ChatPage() {
   })
 
   // Local State
-  const [intent, setIntent] = useState<string | null>('I1')
+  const [intent, setIntent] = useState<Intent>('I1')
   
   // Send handler
   const handleSend = async () => {
@@ -53,7 +53,7 @@ export default function ChatPage() {
     await delay(rand(1000, 4000))
 
     setIsTyping(true)
-    const { reply, identifiedIntent } = await generateResponse(input, intent!, promptTechnique, messages)
+    const { reply, identifiedIntent } = await generateResponse(input, intent, promptTechnique, messages)
     console.log('Identified Intent: ', identifiedIntent)
     setIntentCount(prev => ({
       ...prev,

@@ -1,9 +1,6 @@
 'use server'
 import { ChatOpenAI } from '@langchain/openai'
-import { computeNextIntent } from '@/lib/ai/intent'
-import { z } from 'zod'
-import { COGNITIVE_DISTORTION_KEYS, identifyCognitiveDistortions } from '@/lib/ai/distortion'
-import { CHOSEN_PROMPT, IntentPromptMap, IntentPromptConfig } from '@/lib/ai/intent' 
+import { CogniEngine, type Intent, type PromptTechnique } from '@rainev/cogni'
 
 // All functions that call APIs is will be defined here
 
@@ -13,57 +10,32 @@ const model = new ChatOpenAI({
   temperature: 0.2,
 })
 
-const classify = model.withStructuredOutput(
-  z.object({
-    distortion: z.enum(COGNITIVE_DISTORTION_KEYS),
-    confidence: z.number().min(0).max(1),
-    rationale: z.string(),
-  }),
-)
+// Initialize the Cogni engine
+const engine = new CogniEngine(model)
 
-const SystemResponse = model.withStructuredOutput(
-  z.object({
-    response: z.string(),
-    moveToNextIntent: z.boolean(),
-    confidence: z.number().min(0).max(1),
-    reason: z.string(),
-  }),
-)
+export async function generateResponse(
+  message: string,
+  intent: Intent,
+  technique: PromptTechnique,
+  messages: any[]
+) {
+  // Call the cogni engine with the user's message
+  const result = await engine.respond({
+    message,
+    intent,
+    conversation: messages,
+    technique,
+  })
 
-const determine = model.withStructuredOutput(
-  z.object({
-    moveToNextIntent: z.boolean(),
-    confidence: z.number().min(0).max(1),
-    reason: z.string(),
-  }),
-)
+  console.log('Cogni Response:', result)
+  console.log('Next Intent:', result.nextIntent)
+  if (result.distortion) {
+    console.log('Detected Distortion:', result.distortion)
+  }
 
-async function buildPrompt(message: string, intent: string, prompt: string, messages: any): Promise<string> {
-  const distortionIdentified = await identifyCognitiveDistortions(message, classify)
-  const distortion = distortionIdentified.distortion
-  const PROMPT_DATA = CHOSEN_PROMPT[prompt] as IntentPromptMap | null
-  const intentData = PROMPT_DATA?.[intent] ?? ({
-    role: 'Default CBTT-base assistant',
-    system: 'Use general CBT-based guidance to assist the user.',
-  } as IntentPromptConfig)
-
-  console.log('PROMPT DATA: \n', PROMPT_DATA)
-  console.log('intentData: \n', intentData)
-  
-  return [
-    'You are a CBT-based assistant helping the user manage their thoughts and emotions.',
-    `Use this conversation history to inform your response:\n${messages.map((m: any) => `${m.user}: ${m.text}`).join('\n')}`,
-    `Use the following guidelines for this stage:\n${intentData.system}`,
-    `Identified Cognitive Distortion: ${distortion}.`,
-    `\nUser Message:\n"${message}"`,
-    '\nPlease respond in a way that aligns with the user\'s CBT stage and identified distortion.',
-  ].join('\n')
-}
-
-export async function generateResponse(message: string, intent: string, prompt: string, messages: any) {
-  const response = await buildPrompt(message, intent, prompt, messages)
-  console.log('FINAL PROMPT: ', response)
-  const reply = await model.invoke(response) 
-  const nextIntent = await computeNextIntent(intent, determine, message, messages, prompt)
-  return { reply: reply.text, identifiedIntent: nextIntent }
+  return {
+    reply: result.reply,
+    identifiedIntent: result.nextIntent,
+    distortion: result.distortion
+  }
 }

@@ -1,11 +1,5 @@
 import { create } from 'zustand'
-
-export type PromptTechnique = 
-  | 'default'
-  | 'few-shot'
-  | 'chain-of-thought'
-  | 'persona'
-  | 'plan-and-solve'
+import { type PromptTechnique } from '@rainev/cogni'
 
 interface PromptState {
     promptTechnique: PromptTechnique
