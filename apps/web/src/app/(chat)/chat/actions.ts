@@ -17,7 +17,7 @@ export async function generateResponse(
   message: string,
   intent: Intent,
   technique: PromptTechnique,
-  messages: Message[]
+  messages: Message[],
 ) {
   // Call the cogni engine with the user's message
   const result = await engine.respond({

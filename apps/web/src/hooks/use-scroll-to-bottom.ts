@@ -7,6 +7,7 @@ export function useScrollToBottom(deps?: unknown[]) {
 
   useEffect(() => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
   return ref
