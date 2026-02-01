@@ -17,7 +17,7 @@ export async function generateResponse(
   message: string,
   intent: Intent,
   technique: PromptTechnique,
-  messages: any[]
+  messages: any[],
 ) {
   // Call the cogni engine with the user's message
   const result = await engine.respond({
@@ -36,6 +36,6 @@ export async function generateResponse(
   return {
     reply: result.reply,
     identifiedIntent: result.nextIntent,
-    distortion: result.distortion
+    distortion: result.distortion,
   }
 }
