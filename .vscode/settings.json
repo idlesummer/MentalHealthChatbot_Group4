@@ -1,0 +1,7 @@
+{
+  // Tailwind CSS IntelliSense - Exclude shadcn components (third-party code)
+  "tailwindCSS.files.exclude": [
+    "**/apps/web/src/components/ui/**",
+    "**/apps/web/src/hooks/use-mobile.ts"
+  ],
+}

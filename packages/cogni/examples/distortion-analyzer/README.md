@@ -27,7 +27,7 @@ Analyze messages to automatically identify cognitive distortions using Cogni's c
 ## Setup
 
 ```bash
-npm install
+pnpm install
 cp .env.example .env
 # Add your OPENAI_API_KEY to .env
 ```
@@ -35,7 +35,7 @@ cp .env.example .env
 ## Run
 
 ```bash
-npm start
+pnpm start
 ```
 
 ## Expected Output

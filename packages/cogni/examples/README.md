@@ -14,9 +14,9 @@ The simplest introduction to Cogni - shows how to:
 
 ```bash
 cd basic-usage
-npm run build:cogni
+pnpm build:cogni
 cp .env.example .env  # Add your OPENAI_API_KEY
-npm start
+pnpm start
 ```
 
 **What you'll learn:**
@@ -41,9 +41,9 @@ Demonstrates a complete therapeutic conversation through all 8 CBT stages:
 
 ```bash
 cd complete-session
-npm run build:cogni
+pnpm build:cogni
 cp .env.example .env  # Add your OPENAI_API_KEY
-npm start
+pnpm start
 ```
 
 **What you'll learn:**
@@ -65,9 +65,9 @@ Compares all 4 prompt engineering techniques side-by-side:
 
 ```bash
 cd technique-comparison
-npm run build:cogni
+pnpm build:cogni
 cp .env.example .env  # Add your OPENAI_API_KEY
-npm start
+pnpm start
 ```
 
 **What you'll learn:**
@@ -94,9 +94,9 @@ Analyzes messages to identify the 10 cognitive distortions:
 
 ```bash
 cd distortion-analyzer
-npm run build:cogni
+pnpm build:cogni
 cp .env.example .env  # Add your OPENAI_API_KEY
-npm start
+pnpm start
 ```
 
 **What you'll learn:**
@@ -116,7 +116,7 @@ npm start
 
 2. **Install dependencies:**
    ```bash
-   npm run build:cogni
+   pnpm build:cogni
    ```
 
 3. **Configure environment:**
@@ -130,7 +130,7 @@ npm start
 
 4. **Run the example:**
    ```bash
-   npm start
+   pnpm start
    ```
 
 ---
@@ -209,7 +209,7 @@ All examples require:
 
 3. **Dependencies**
    ```bash
-   npm run build:cogni  # In each example directory
+   pnpm build:cogni  # In each example directory
    ```
 
 ---
@@ -219,15 +219,15 @@ All examples require:
 ### Running Multiple Examples
 ```bash
 # Run basic-usage
-cd examples/cogni-examples/basic-usage && npm start
+cd examples/cogni-examples/basic-usage && pnpm start
 
 # Run complete-session
-cd ../complete-session && npm start
+cd ../complete-session && pnpm start
 ```
 
 ### Development Mode (Auto-reload)
 ```bash
-npm run dev  # Uses tsx watch mode
+pnpm dev  # Uses tsx watch mode
 ```
 
 ### Customizing Examples
@@ -251,13 +251,13 @@ intent: "I2"  // Start at a different stage
 → Make sure you copied `.env.example` to `.env` and added your key
 
 ### "Module not found"
-→ Run `npm run build:cogni` in the example directory
+→ Run `pnpm build:cogni` in the example directory
 
 ### "tsx command not found"
 → The package.json should install tsx as a dev dependency. Try:
 ```bash
 rm -rf node_modules package-lock.json
-npm run build:cogni
+pnpm build:cogni
 ```
 
 ### Rate Limit Errors

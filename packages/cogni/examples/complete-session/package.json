@@ -4,7 +4,7 @@
   "description": "Complete CBT session example showing all 8 intents",
   "type": "module",
   "scripts": {
-    "build:cogni": "npm run build --prefix ../..",
+    "build:cogni": "pnpm --filter @rainev/cogni build",
     "start": "tsx index.ts"
   },
   "keywords": [

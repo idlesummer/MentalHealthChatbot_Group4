@@ -4,7 +4,7 @@
   "description": "Analyze cognitive distortions in multiple messages",
   "type": "module",
   "scripts": {
-    "build:cogni": "npm run build --prefix ../..",
+    "build:cogni": "pnpm --filter @rainev/cogni build",
     "start": "tsx index.ts"
   },
   "keywords": ["cogni", "cbt", "example", "cognitive-distortions", "analysis"],

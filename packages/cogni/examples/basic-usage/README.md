@@ -12,7 +12,7 @@ This example demonstrates the simplest way to use the Cogni CBT Engine.
 
 1. Install dependencies:
 ```bash
-npm install
+pnpm install
 ```
 
 2. Create `.env` file:
@@ -28,7 +28,7 @@ OPENAI_API_KEY=sk-your-key-here
 ## Run
 
 ```bash
-npm start
+pnpm start
 ```
 
 ## Expected Output

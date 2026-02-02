@@ -450,7 +450,7 @@ expect(result.reply).toBe("Mock response");
 This module is part of the Mental Health Chatbot project. To contribute:
 
 1. Make changes in `src/cogni/`
-2. Ensure TypeScript types are correct: `npm run type-check`
+2. Ensure TypeScript types are correct: `pnpm build`
 3. Test with the main application
 4. Document API changes in this README
 

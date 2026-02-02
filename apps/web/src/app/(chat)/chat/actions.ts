@@ -1,6 +1,7 @@
 'use server'
 import { ChatOpenAI } from '@langchain/openai'
-import { CogniEngine, type Intent, type PromptTechnique, type Message } from '@rainev/cogni'
+import { CogniEngine } from '@rainev/cogni'
+import type { Intent, PromptTechnique, Message } from '@rainev/cogni'
 
 // All functions that call APIs is will be defined here
 
