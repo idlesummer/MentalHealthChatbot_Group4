@@ -6,9 +6,9 @@
  * ensuring consistency and reliability in response generation.
  */
 
+import { z } from 'zod'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import type { Runnable } from '@langchain/core/runnables'
-import { z } from 'zod'
 
 /** Schema for reply generation output */
 const replyGenerationSchema = z.object({

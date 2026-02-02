@@ -64,7 +64,6 @@ export interface ComputeNextIntentParams {
  * ```
  */
 export class CogniEngine {
-  private model: BaseChatModel
   private services: {
     distortionClassifier: DistortionClassifier
     promptBuilder: PromptBuilder
@@ -73,7 +72,6 @@ export class CogniEngine {
   }
 
   constructor(model: BaseChatModel) {
-    this.model = model
 
     // Initialize services
     const distortionClassifier = new DistortionClassifier(model)
