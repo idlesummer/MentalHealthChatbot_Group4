@@ -35,7 +35,7 @@
   "scripts": {
     "build": "tsdown",
     "lint": "eslint",
-    "prepare": "npm run build",
+    "prepare": "pnpm build",
     "test": "vitest"
   },
   "dependencies": {

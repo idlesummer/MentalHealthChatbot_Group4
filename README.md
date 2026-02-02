@@ -97,10 +97,8 @@ Or from inside the package directory:
 
 ```bash
 cd packages/cogni
-npm run build
+pnpm build
 ```
-
-(Using npm for scripts is fine; installs are handled by pnpm.)
 
 ---
 
@@ -117,7 +115,7 @@ Or locally inside an example directory:
 
 ```bash
 cd packages/cogni/examples/basic-usage
-npm run build
+pnpm build
 tsx index.ts
 ```
 
