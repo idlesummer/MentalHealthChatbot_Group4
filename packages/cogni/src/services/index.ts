@@ -9,7 +9,9 @@ export { DistortionClassifier, COGNITIVE_DISTORTION_KEYS, COGNITIVE_DISTORTIONS 
 export { IntentManager } from './intent-manager'
 export { PromptBuilder } from './prompt-builder'
 export { ReplyParser } from './reply-parser'
+export { ReplyGenerator } from './reply-generator'
 
 export type { CognitiveDistortion, CognitiveDistortionClassification } from './distortion-classifier'
 export type { Intent, IntentManagerConfig, IntentTransition } from './intent-manager'
 export type { Message } from './prompt-builder'
+export type { ReplyGenerationResult } from './reply-generator'

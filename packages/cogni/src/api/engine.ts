@@ -7,7 +7,7 @@
  */
 
 import { PROMPT_TECHNIQUES } from '@/prompts'
-import { DistortionClassifier, PromptBuilder, ReplyParser, IntentManager } from '@/services'
+import { DistortionClassifier, PromptBuilder, ReplyGenerator, IntentManager } from '@/services'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import type { PromptTechnique } from '@/prompts'
 import type {
@@ -68,7 +68,7 @@ export class CogniEngine {
   private services: {
     distortionClassifier: DistortionClassifier
     promptBuilder: PromptBuilder
-    replyParser: ReplyParser
+    replyGenerator: ReplyGenerator
     intentManager: IntentManager
   }
 
@@ -78,12 +78,12 @@ export class CogniEngine {
     // Initialize services
     const distortionClassifier = new DistortionClassifier(model)
     const promptBuilder = new PromptBuilder()
-    const replyParser =   new ReplyParser()
+    const replyGenerator = new ReplyGenerator(model)
     const intentManager = new IntentManager({ model, promptBuilder })
     this.services = {
       promptBuilder,
       distortionClassifier,
-      replyParser,
+      replyGenerator,
       intentManager,
     }
   }
@@ -112,9 +112,9 @@ export class CogniEngine {
       distortion,
     )
 
-    // Step 3: Generate reply
-    const completion = await this.model.invoke(replyPrompt)
-    const reply = this.services.replyParser.parse(completion)
+    // Step 3: Generate reply with structured output
+    const result = await this.services.replyGenerator.generate(replyPrompt)
+    const reply = result.reply
 
     // Step 4: Compute next intent
     const newIntent = await this.services.intentManager.computeNextIntent(intent, message, convo) as Intent
