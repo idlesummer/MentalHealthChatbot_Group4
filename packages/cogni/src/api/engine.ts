@@ -115,7 +115,7 @@ export class CogniEngine {
     const reply = result.reply
 
     // Step 4: Compute next intent
-    const newIntent = await this.services.intentManager.computeNextIntent(intent, message, conversation) as Intent
+    const newIntent = await this.services.intentManager.computeNextIntent(intent, message, conversation)
     const nextIntent = newIntent || intent
     const response: CogniResponse = { reply, nextIntent, distortion }
     return response
@@ -127,13 +127,13 @@ export class CogniEngine {
   }
 
   /** Get all available intents */
-  getIntents() {
-    return this.services.intentManager.getIntents() as Intent[]
+  getIntents(): Intent[] {
+    return this.services.intentManager.getIntents()
   }
 
   /** Get the initial intent for a new session */
-  getInitialIntent() {
-    return this.services.intentManager.getInitialIntent() as Intent
+  getInitialIntent(): Intent {
+    return this.services.intentManager.getInitialIntent()
   }
 
   /** Get all available prompt techniques */

@@ -36,7 +36,7 @@ export interface IntentManagerConfig {
 
 /** Service for managing intent transitions in the CBT pipeline */
 export class IntentManager {
-  private stateMachine: StateMachine<string, string, Message[], IntentTransition, string>
+  private stateMachine: StateMachine<Intent, string, Message[], IntentTransition, string>
   private intentEvaluator: Runnable
   private config: IntentManagerConfig
   private intentCounts: Record<Intent, number> = {
@@ -56,22 +56,22 @@ export class IntentManager {
     // Create structured output model for intent evaluation
     this.intentEvaluator = config.model.withStructuredOutput(intentTransitionSchema)
     this.stateMachine = new StateMachine({
-      initialState: 'I1',
+      initialState: 'I1' as Intent,
       routes: INTENT_ROUTE_REGISTRY,
       stateMeta: INTENT_COMPLETION_REGISTRY,
       shouldAdvance: decision => decision.moveToNextIntent && decision.confidence > 0.5,
-      evaluator: async (state: string, input: string, context: Message[], meta?: string) => {
+      evaluator: async (state: Intent, input: string, context: Message[], meta?: string) => {
         return this.evaluateTransition(state, input, context, meta)
       },
     })
   }
 
   /** Evaluate whether to transition to the next intent */
-  private async evaluateTransition(state: string, input: string, context: Message[], meta?: string) {
-    const intentConfig = this.getIntentConfig(state as Intent, 'persona')
+  private async evaluateTransition(state: Intent, input: string, context: Message[], meta?: string) {
+    const intentConfig = this.getIntentConfig(state, 'persona')
     const completionRule = meta ?? 'Decide completion conservatively but fairly.'
     const prompt = this.config.promptBuilder.buildIntentEvaluationPrompt(
-      state as Intent,
+      state,
       input,
       context,
       intentConfig,
@@ -82,12 +82,12 @@ export class IntentManager {
   }
 
   /** Compute the next intent based on current state */
-  async computeNextIntent(intent: Intent, message: string, conversation: Message[]) {
+  async computeNextIntent(intent: Intent, message: string, conversation: Message[]): Promise<Intent> {
     try {
       const result = await this.stateMachine.step(intent, message, conversation)
 
       // Track intent usage for analytics
-      this.intentCounts[result.nextState as Intent]++
+      this.intentCounts[result.nextState]++
       console.log('Intent counts:', this.intentCounts)
 
       return result.nextState
@@ -108,12 +108,12 @@ export class IntentManager {
   }
 
   /** Get the initial intent for a new session */
-  getInitialIntent() {
-    return this.stateMachine.getInitialState() as Intent
+  getInitialIntent(): Intent {
+    return this.stateMachine.getInitialState()
   }
 
   /** Get all available intents */
-  getIntents() {
+  getIntents(): Intent[] {
     return INTENTS
   }
 
@@ -123,7 +123,7 @@ export class IntentManager {
   }
 
   /** Get the next intent in the routing sequence */
-  getNextIntentRoute(intent: Intent) {
+  getNextIntentRoute(intent: Intent): Intent | null {
     return INTENT_ROUTE_REGISTRY[intent] ?? null
   }
 
