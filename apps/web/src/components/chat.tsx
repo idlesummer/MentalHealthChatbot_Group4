@@ -35,13 +35,13 @@ export function ChatHeader() {
   const setPromptTechnique = usePromptStateStore(s => s.setPromptTechnique)
   return (
     <div className="flex flex-row items-center pt-4 px-8 space-x-4">
-      <Avatar className="h-10 w-10 bg-muted border-2 border-green-400">
+      <Avatar className="h-10 w-10 bg-muted border-2 border-primary">
         <AvatarImage src="/avatars/pebbles.svg" />
         <AvatarFallback>P</AvatarFallback>
       </Avatar>
       <div className="min-w-0">
         <h1 className="truncate text-base font-semibold">Pebbles the Pibble</h1>
-        <p className="text-xs text-green-400">Online</p>
+        <p className="text-xs text-primary">Online</p>
       </div>
 
       <Select
