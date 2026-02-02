@@ -102,7 +102,7 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
       )}
       <div className={cn('flex flex-col gap-1', isUser && 'items-end')}>
         <div className={cn(
-          'px-3 py-2 max-w-[50rem] rounded-lg',
+          'px-3 py-2 max-w-200 rounded-lg',
           isUser
             ? 'bg-primary text-primary-foreground rounded-br-none'
             : 'bg-muted text-foreground rounded-bl-none',
@@ -145,7 +145,7 @@ export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
             onChange={e => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Send a message..."
-            className="flex-1 resize-none min-h-[1rem] max-h-[24rem]"
+            className="flex-1 resize-none min-h-4 max-h-96"
           />
           <Button variant="outline" type="submit" size="icon">
             <Send className="h-4 w-4" />
