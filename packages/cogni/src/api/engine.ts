@@ -96,7 +96,7 @@ export class CogniEngine {
    * 3. Generates a response using the LLM
    * 4. Evaluates whether to transition to the next intent
    */
-  async respond({ message, intent, conversation: convo, technique }: CogniRequest) {
+  async respond({ message, intent, conversation, technique }: CogniRequest) {
 
     // Step 1: Identify cognitive distortion
     const distortion = await this.services.distortionClassifier.classify(message)
@@ -106,7 +106,7 @@ export class CogniEngine {
       message,
       intent,
       technique,
-      convo,
+      conversation,
       distortion,
     )
 
@@ -115,7 +115,7 @@ export class CogniEngine {
     const reply = result.reply
 
     // Step 4: Compute next intent
-    const newIntent = await this.services.intentManager.computeNextIntent(intent, message, convo) as Intent
+    const newIntent = await this.services.intentManager.computeNextIntent(intent, message, conversation) as Intent
     const nextIntent = newIntent || intent
     const response: CogniResponse = { reply, nextIntent, distortion }
     return response

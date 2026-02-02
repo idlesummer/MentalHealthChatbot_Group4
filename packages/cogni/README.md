@@ -354,12 +354,12 @@ export async function respond(
   message: string,
   intent: string,
   prompt: string,
-  messages: Message[]
+  conversation: Message[]
 ) {
   const result = await cogniEngine.respond({
     message,
     intent: intent,
-    conversation: messages,
+    conversation,
     technique: prompt,
   });
 
