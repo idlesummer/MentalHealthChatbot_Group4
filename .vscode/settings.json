@@ -1,0 +1,15 @@
+{
+  // Tailwind CSS IntelliSense - Exclude shadcn components (third-party code)
+  "tailwindCSS.files.exclude": [
+    "**/apps/web/src/components/ui/**",
+    "**/apps/web/src/hooks/use-mobile.ts"
+  ],
+
+  // Optional: Also exclude from general file watcher if needed
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/.next/**": true
+  }
+}
