@@ -10,6 +10,8 @@ export { IntentManager } from './intent-manager'
 export { PromptBuilder } from './prompt-builder'
 export { ReplyParser } from './reply-parser'
 export { ReplyGenerator } from './reply-generator'
+export { CommandDetector } from './command-detector'
+export { SessionManager } from './session-manager'
 
 export type { CognitiveDistortion, CognitiveDistortionClassification } from './distortion-classifier'
 export type { Intent, IntentManagerConfig, IntentTransition } from './intent-manager'

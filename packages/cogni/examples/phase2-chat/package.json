@@ -1,0 +1,17 @@
+{
+  "name": "@rainev/cogni-example-phase2-chat",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Phase 2 chat features example - session management and command detection",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "@langchain/openai": "^0.3.18",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}
