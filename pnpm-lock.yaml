@@ -208,6 +208,19 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
 
+  packages/cogni/examples/phase2-chat:
+    dependencies:
+      '@langchain/openai':
+        specifier: ^1.2.3
+        version: 1.2.4(@langchain/core@1.1.18(openai@6.17.0(zod@4.3.6)))
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+    devDependencies:
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+
   packages/cogni/examples/technique-comparison:
     dependencies:
       '@langchain/openai':

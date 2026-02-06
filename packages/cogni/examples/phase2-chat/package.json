@@ -8,10 +8,10 @@
     "start": "tsx index.ts"
   },
   "dependencies": {
-    "@langchain/openai": "^0.3.18",
-    "dotenv": "^16.4.7"
+    "@langchain/openai": "^1.2.3",
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
-    "tsx": "^4.19.2"
+    "tsx": "^4.21.0"
   }
 }
