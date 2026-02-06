@@ -1,0 +1,27 @@
+{
+  "name": "cogni-session-summary-example",
+  "version": "1.0.0",
+  "description": "Session summary example demonstrating therapist-facing analytics and Mermaid flowchart generation",
+  "type": "module",
+  "scripts": {
+    "build:cogni": "pnpm --filter @rainev/cogni build",
+    "start": "tsx index.ts"
+  },
+  "keywords": [
+    "cogni",
+    "cbt",
+    "example",
+    "session-summary",
+    "therapist-metrics"
+  ],
+  "author": "Mental Health Chatbot Team",
+  "license": "MIT",
+  "dependencies": {
+    "@rainev/cogni": "file:../..",
+    "@langchain/openai": "^1.2.3",
+    "dotenv": "^17.2.3",
+    "langchain": "^1.2.13",
+    "tsx": "^4.21.0"
+  },
+  "main": "index.js"
+}
