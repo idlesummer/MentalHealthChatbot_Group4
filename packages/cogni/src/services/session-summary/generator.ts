@@ -6,6 +6,10 @@
  * intent funnel, a Mermaid flowchart, and a plain-text clinician summary.
  *
  * This is a pure, stateless transformer: records in, summary out.
+ *
+ * When `stageSummaries` are provided (e.g. LLM-generated), they replace
+ * the raw user messages in the Mermaid chart and text summary, producing
+ * cleaner clinician-facing output.
  */
 
 import { INTENTS } from '../intent-manager/intents'
@@ -18,7 +22,15 @@ import type {
   MoodDelta,
   SessionStageRecord,
   SessionSummary,
+  StageSummaries,
 } from './types'
+
+/** Options for summary generation */
+export interface GenerateOptions {
+  /** Per-intent summaries to use instead of raw user messages.
+   *  When provided, these override in the Mermaid chart and text summary. */
+  stageSummaries?: StageSummaries
+}
 
 /** Stateless generator that transforms session records into a typed summary */
 export class SessionSummaryGenerator {
@@ -27,6 +39,7 @@ export class SessionSummaryGenerator {
   generate(
     records: readonly SessionStageRecord[],
     technique: PromptTechnique | 'mixed',
+    options?: GenerateOptions,
   ): SessionSummary {
     const stages = [...records]
     const totalTurns = stages.length
@@ -40,11 +53,15 @@ export class SessionSummaryGenerator {
     const finalIntent = stages[totalTurns - 1]!.nextIntent
     const completedFullCycle = this.didCompleteCycle(stages)
 
+    // Build the per-intent summary map: LLM overrides > raw user messages
+    const rawSummaries = this.buildRawStageSummaries(stages)
+    const stageSummaries: StageSummaries = { ...rawSummaries, ...options?.stageSummaries }
+
     const moodDelta = this.computeMoodDelta(stages)
     const distortionProfile = this.computeDistortionProfile(stages)
     const intentFunnel = this.computeIntentFunnel(stages)
-    const mermaidChart = this.buildMermaidChart(stages, moodDelta)
-    const textSummary = this.buildTextSummary(stages, moodDelta, distortionProfile, completedFullCycle)
+    const mermaidChart = this.buildMermaidChart(stages, moodDelta, stageSummaries)
+    const textSummary = this.buildTextSummary(stageSummaries, moodDelta, distortionProfile, completedFullCycle, totalTurns)
 
     return {
       metadata: {
@@ -57,12 +74,28 @@ export class SessionSummaryGenerator {
         finalIntent,
       },
       stages,
+      stageSummaries,
       moodDelta,
       distortionProfile,
       intentFunnel,
       mermaidChart,
       textSummary,
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Stage Summaries (raw baseline)
+  // ---------------------------------------------------------------------------
+
+  /** Build a map of intent -> raw user message (first visit per intent) */
+  private buildRawStageSummaries(stages: SessionStageRecord[]): StageSummaries {
+    const summaries: StageSummaries = {}
+    for (const stage of stages) {
+      if (!summaries[stage.intent]) {
+        summaries[stage.intent] = stage.userMessage
+      }
+    }
+    return summaries
   }
 
   // ---------------------------------------------------------------------------
@@ -86,7 +119,6 @@ export class SessionSummaryGenerator {
 
   /** Extract a numeric mood score from free-text user input */
   private extractMoodScore(text: string): number | null {
-    // Match patterns like "80", "80/100", "80 out of 100", "around 80"
     const patterns = [
       /(\d{1,3})\s*(?:\/|out of)\s*100/i,
       /(?:about|around|maybe|roughly|approximately)\s*(\d{1,3})/i,
@@ -158,27 +190,27 @@ export class SessionSummaryGenerator {
   // Mermaid Flowchart
   // ---------------------------------------------------------------------------
 
-  private buildMermaidChart(stages: SessionStageRecord[], moodDelta: MoodDelta | null): string {
+  private buildMermaidChart(
+    stages: SessionStageRecord[],
+    moodDelta: MoodDelta | null,
+    stageSummaries: StageSummaries,
+  ): string {
     const lines: string[] = ['graph LR']
 
-    // Define nodes for visited intents
     const visitedIntents = new Map<Intent, SessionStageRecord>()
     for (const stage of stages) {
-      // Keep the first record per intent (primary visit)
       if (!visitedIntents.has(stage.intent)) {
         visitedIntents.set(stage.intent, stage)
       }
     }
 
-    // Build node definitions with data
     for (const [intent, stage] of visitedIntents) {
       const label = INTENT_LABELS[intent]
-      const snippet = this.truncate(stage.userMessage, 40)
+      const snippet = this.truncate(stageSummaries[intent] ?? stage.userMessage, 40)
       const distortionTag = stage.distortion && stage.distortion.distortion !== 'none'
         ? `<br/><i>${stage.distortion.distortion} ${Math.round(stage.distortion.confidence * 100)}%</i>`
         : ''
 
-      // Add mood score annotation for I3 and I7
       let moodTag = ''
       if (intent === 'I3' && moodDelta && moodDelta.preScore !== null) {
         moodTag = `<br/><b>Mood: ${moodDelta.preScore}/100</b>`
@@ -189,19 +221,16 @@ export class SessionSummaryGenerator {
       lines.push(`  ${intent}["<b>${label}</b><br/>${snippet}${moodTag}${distortionTag}"]`)
     }
 
-    // Build edges in visit order
     const intentOrder = [...visitedIntents.keys()]
     for (let i = 0; i < intentOrder.length - 1; i++) {
       lines.push(`  ${intentOrder[i]} --> ${intentOrder[i + 1]}`)
     }
 
-    // Add mood delta annotation if both scores exist
     if (moodDelta && moodDelta.delta !== null && moodDelta.preScore !== null && moodDelta.postScore !== null) {
       const direction = moodDelta.delta < 0 ? 'decreased' : moodDelta.delta > 0 ? 'increased' : 'unchanged'
       lines.push(`  I7 -. "Mood ${direction} by ${Math.abs(moodDelta.delta)}" .-> I3`)
     }
 
-    // Style nodes
     lines.push('')
     lines.push('  %% Styling')
     for (const intent of intentOrder) {
@@ -220,10 +249,11 @@ export class SessionSummaryGenerator {
   // ---------------------------------------------------------------------------
 
   private buildTextSummary(
-    stages: SessionStageRecord[],
+    stageSummaries: StageSummaries,
     moodDelta: MoodDelta | null,
     distortionProfile: DistortionProfile[],
     completedFullCycle: boolean,
+    totalTurns: number,
   ): string {
     const lines: string[] = []
 
@@ -231,44 +261,30 @@ export class SessionSummaryGenerator {
     lines.push('===============')
     lines.push('')
 
-    // Stage-by-stage recap
-    const stagesByIntent = new Map<Intent, SessionStageRecord>()
-    for (const s of stages) {
-      if (!stagesByIntent.has(s.intent)) stagesByIntent.set(s.intent, s)
-    }
-
-    const i1 = stagesByIntent.get('I1')
-    const i2 = stagesByIntent.get('I2')
-    const i4 = stagesByIntent.get('I4')
-    const i5 = stagesByIntent.get('I5')
-    const i6 = stagesByIntent.get('I6')
-    const i8 = stagesByIntent.get('I8')
-
-    if (i1) lines.push(`Situation:          ${i1.userMessage}`)
-    if (i2) lines.push(`Automatic Thought:  ${i2.userMessage}`)
+    if (stageSummaries.I1) lines.push(`Situation:           ${stageSummaries.I1}`)
+    if (stageSummaries.I2) lines.push(`Automatic Thought:   ${stageSummaries.I2}`)
 
     if (moodDelta) {
-      lines.push(`Initial Mood:       ${moodDelta.preText}${moodDelta.preScore !== null ? ` (${moodDelta.preScore}/100)` : ''}`)
+      lines.push(`Initial Mood:        ${stageSummaries.I3 ?? moodDelta.preText}${moodDelta.preScore !== null ? ` (${moodDelta.preScore}/100)` : ''}`)
     }
 
-    if (i4) lines.push(`Evidence For:       ${i4.userMessage}`)
-    if (i5) lines.push(`Evidence Against:   ${i5.userMessage}`)
-    if (i6) lines.push(`Alternative Thought: ${i6.userMessage}`)
+    if (stageSummaries.I4) lines.push(`Evidence For:        ${stageSummaries.I4}`)
+    if (stageSummaries.I5) lines.push(`Evidence Against:    ${stageSummaries.I5}`)
+    if (stageSummaries.I6) lines.push(`Alternative Thought: ${stageSummaries.I6}`)
 
     if (moodDelta?.postText) {
-      lines.push(`Re-rated Mood:      ${moodDelta.postText}${moodDelta.postScore !== null ? ` (${moodDelta.postScore}/100)` : ''}`)
+      lines.push(`Re-rated Mood:       ${stageSummaries.I7 ?? moodDelta.postText}${moodDelta.postScore !== null ? ` (${moodDelta.postScore}/100)` : ''}`)
     }
 
     if (moodDelta && moodDelta.delta !== null) {
       const direction = moodDelta.delta < 0 ? 'decreased' : moodDelta.delta > 0 ? 'increased' : 'unchanged'
-      lines.push(`Mood Change:        ${direction} by ${Math.abs(moodDelta.delta)} points`)
+      lines.push(`Mood Change:         ${direction} by ${Math.abs(moodDelta.delta)} points`)
     }
 
-    if (i8) lines.push(`Coping Strategy:    ${i8.userMessage}`)
+    if (stageSummaries.I8) lines.push(`Coping Strategy:     ${stageSummaries.I8}`)
 
     lines.push('')
 
-    // Distortions detected
     if (distortionProfile.length > 0) {
       lines.push('Cognitive Distortions Detected:')
       for (const d of distortionProfile) {
@@ -277,9 +293,8 @@ export class SessionSummaryGenerator {
       lines.push('')
     }
 
-    // Completion status
-    lines.push(`Session Status:     ${completedFullCycle ? 'Completed full CBT cycle (I1-I8)' : 'Partial session'}`)
-    lines.push(`Total Turns:        ${stages.length}`)
+    lines.push(`Session Status:      ${completedFullCycle ? 'Completed full CBT cycle (I1-I8)' : 'Partial session'}`)
+    lines.push(`Total Turns:         ${totalTurns}`)
 
     return lines.join('\n')
   }
@@ -310,6 +325,7 @@ export class SessionSummaryGenerator {
         finalIntent: 'I1',
       },
       stages: [],
+      stageSummaries: {},
       moodDelta: null,
       distortionProfile: [],
       intentFunnel: INTENTS.map(intent => ({

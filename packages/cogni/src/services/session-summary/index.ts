@@ -11,6 +11,7 @@ export type { RecordTurnInput } from './tracker'
 export type {
   SessionSummary,
   SessionStageRecord,
+  StageSummaries,
   MoodDelta,
   DistortionProfile,
   IntentFunnel,

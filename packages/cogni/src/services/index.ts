@@ -20,6 +20,7 @@ export type {
   RecordTurnInput,
   SessionSummary,
   SessionStageRecord,
+  StageSummaries,
   MoodDelta,
   DistortionProfile,
   IntentFunnel,

@@ -4,7 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { MermaidChart } from '@/components/mermaid-chart'
 import { cn } from '@/lib/utils'
-import type { SessionSummary } from '@rainev/cogni'
+import type { SessionSummary, Intent } from '@rainev/cogni'
+
+const INTENT_LABELS: Record<Intent, string> = {
+  I1: 'Situation',
+  I2: 'Automatic Thought',
+  I3: 'Mood Rating',
+  I4: 'Evidence For',
+  I5: 'Evidence Against',
+  I6: 'Alternative Thought',
+  I7: 'Mood Re-rating',
+  I8: 'Coping Strategy',
+}
+
+const INTENT_ORDER: Intent[] = ['I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'I8']
 
 // =============================================================================
 // Main Panel
@@ -20,6 +33,7 @@ export function SessionSummaryPanel({ summary }: { summary: SessionSummary }) {
       </div>
       <FlowchartCard summary={summary} />
       <IntentFunnelCard summary={summary} />
+      <StageSummariesCard summary={summary} />
       <ClinicalSummaryCard summary={summary} />
     </div>
   )
@@ -237,13 +251,59 @@ function IntentFunnelCard({ summary }: { summary: SessionSummary }) {
 }
 
 // =============================================================================
-// Clinical Text Summary
+// Stage Summaries (LLM-generated clinical notes)
+// =============================================================================
+
+function StageSummariesCard({ summary }: { summary: SessionSummary }) {
+  const { stageSummaries } = summary
+  const entries = INTENT_ORDER
+    .filter(intent => stageSummaries[intent])
+    .map(intent => ({ intent, label: INTENT_LABELS[intent], text: stageSummaries[intent]! }))
+
+  if (entries.length === 0) {
+    return (
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Stage Notes</CardTitle></CardHeader>
+        <CardContent><p className="text-sm text-muted-foreground">No stage data available.</p></CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-sm">Stage Notes</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        {entries.map(({ intent, label, text }) => (
+          <div key={intent} className="flex gap-3 items-start">
+            <span className={cn(
+              'shrink-0 mt-0.5 inline-flex items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-bold',
+              intent === 'I3' || intent === 'I7'
+                ? 'bg-amber-100 text-amber-800'
+                : intent === 'I8'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-muted text-muted-foreground',
+            )}>
+              {intent}
+            </span>
+            <div className="min-w-0">
+              <span className="text-xs font-semibold text-muted-foreground">{label}</span>
+              <p className="text-sm leading-snug">{text}</p>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+// =============================================================================
+// Clinical Text Summary (plain-text fallback)
 // =============================================================================
 
 function ClinicalSummaryCard({ summary }: { summary: SessionSummary }) {
   return (
     <Card>
-      <CardHeader><CardTitle className="text-sm">Clinician Summary</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-sm">Raw Clinician Summary</CardTitle></CardHeader>
       <CardContent>
         <pre className="whitespace-pre-wrap text-xs leading-relaxed font-mono bg-muted rounded-lg p-4">
           {summary.textSummary}
