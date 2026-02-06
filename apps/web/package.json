@@ -25,6 +25,7 @@
     "clsx": "^2.1.1",
     "langchain": "^1.2.16",
     "lucide-react": "^0.563.0",
+    "mermaid": "^11.12.2",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
