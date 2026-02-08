@@ -38,17 +38,25 @@ export async function generateResponse(
 // Stage summarization via LLM
 // -----------------------------------------------------------------------------
 
-/** Schema for the LLM stage summaries response */
-const stageSummariesSchema = z.object({
-  I1: z.string().optional().describe('Concise clinical summary of the situation'),
-  I2: z.string().optional().describe('Concise clinical summary of the automatic thought'),
-  I3: z.string().optional().describe('Concise clinical summary of the initial mood rating'),
-  I4: z.string().optional().describe('Concise clinical summary of evidence supporting the thought'),
-  I5: z.string().optional().describe('Concise clinical summary of evidence against the thought'),
-  I6: z.string().optional().describe('Concise clinical summary of the alternative thought'),
-  I7: z.string().optional().describe('Concise clinical summary of the mood re-rating'),
-  I8: z.string().optional().describe('Concise clinical summary of the coping strategy'),
-})
+/** Schema for the LLM stage summaries response — dynamically built from visited intents */
+function buildStageSummariesSchema(intents: Intent[]) {
+  const descriptions: Record<Intent, string> = {
+    I1: 'Concise clinical summary of the situation',
+    I2: 'Concise clinical summary of the automatic thought',
+    I3: 'Concise clinical summary of the initial mood rating',
+    I4: 'Concise clinical summary of evidence supporting the thought',
+    I5: 'Concise clinical summary of evidence against the thought',
+    I6: 'Concise clinical summary of the alternative thought',
+    I7: 'Concise clinical summary of the mood re-rating',
+    I8: 'Concise clinical summary of the coping strategy',
+  }
+
+  const shape: Record<string, z.ZodString> = {}
+  for (const intent of intents) {
+    shape[intent] = z.string().describe(descriptions[intent])
+  }
+  return z.object(shape)
+}
 
 const STAGE_SUMMARIZER_PROMPT = [
   'You are a clinical note writer summarizing a CBT session for a therapist.',
@@ -56,26 +64,30 @@ const STAGE_SUMMARIZER_PROMPT = [
   'Preserve all key details (names, numbers, specific thoughts) — be lossless but concise.',
   'Write in third person (e.g. "Client described..." not "I described...").',
   'Do NOT add interpretation. Summarize only what the client actually said.',
-  'Only include keys for stages that have data.',
 ].join(' ')
 
 /** Call the LLM to generate concise clinical summaries per stage */
 async function summarizeStages(records: SessionStageRecord[]): Promise<StageSummaries> {
-  // Build a transcript of what happened at each stage
-  const stagesByIntent = new Map<string, SessionStageRecord>()
+  // Collect unique intents that were visited
+  const stagesByIntent = new Map<Intent, SessionStageRecord>()
   for (const r of records) {
     if (!stagesByIntent.has(r.intent)) stagesByIntent.set(r.intent, r)
   }
 
+  const visitedIntents = [...stagesByIntent.keys()]
+  if (visitedIntents.length === 0) return {}
+
   const transcript = [...stagesByIntent.entries()]
     .map(([intent, r]) => [
-      `--- ${intent}: ${INTENT_LABELS[intent as Intent]} ---`,
+      `--- ${intent}: ${INTENT_LABELS[intent]} ---`,
       `Client: ${r.userMessage}`,
       `Therapist: ${r.assistantReply}`,
     ].join('\n'))
     .join('\n\n')
 
-  const summarizer = model.withStructuredOutput(stageSummariesSchema)
+  // Build schema with only the visited intents (all required)
+  const schema = buildStageSummariesSchema(visitedIntents)
+  const summarizer = model.withStructuredOutput(schema)
   const result = await summarizer.invoke([
     { role: 'system', content: STAGE_SUMMARIZER_PROMPT },
     { role: 'user', content: transcript },
