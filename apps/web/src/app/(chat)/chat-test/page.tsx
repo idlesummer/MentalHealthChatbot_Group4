@@ -26,20 +26,20 @@ import { usePromptStateStore } from '@/lib/blueprints/promptStore'
 import { useSessionDataStore } from '@/lib/store/session-data'
 import { generateResponse, generateSessionSummary } from './actions'
 import { ClipboardList, MessageCircle, Trash2 } from 'lucide-react'
-import type { Intent, PromptTechnique, SessionSummary } from '@rainev/cogni'
+import type { PromptTechnique, SessionSummary } from '@rainev/cogni'
 
 export default function ChatTestPage() {
   // Stores
   const { input, setInput, clearInput } = useChatInputStore()
   const { messages, addMessage, clearMessages } = useChatMessagesStore()
   const { promptTechnique, setPromptTechnique } = usePromptStateStore()
-  const { records, recordTurn, clearSession, setTechnique } = useSessionDataStore()
+  const { records, recordTurn, clearSession, setTechnique, currentIntent } = useSessionDataStore()
 
   // UI state
   const [isTyping, setIsTyping] = useState(false)
   const isLoading = useFakeLoading(1500)
   const scrollRef = useScrollToBottom([messages, isLoading, isTyping])
-  const [intent, setIntent] = useState<Intent>('I1')
+  const intent = currentIntent
   const [view, setView] = useState<'chat' | 'summary'>('chat')
   const [summary, setSummary] = useState<SessionSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
@@ -68,8 +68,6 @@ export default function ChatTestPage() {
       nextIntent: identifiedIntent,
       distortion,
     })
-
-    setIntent(identifiedIntent)
   }
 
   // Generate summary
@@ -87,7 +85,6 @@ export default function ChatTestPage() {
     clearMessages()
     clearSession()
     setSummary(null)
-    setIntent('I1')
     setView('chat')
   }
 
