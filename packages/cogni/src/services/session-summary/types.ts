@@ -70,6 +70,12 @@ export interface IntentFunnel {
   completed: boolean
 }
 
+/**
+ * LLM-summarized (or raw) text for each intent stage.
+ * Keys are intent IDs (I1-I8), values are concise clinical summaries.
+ */
+export type StageSummaries = Partial<Record<Intent, string>>
+
 /** The complete session summary produced by SessionSummaryGenerator */
 export interface SessionSummary {
   /** Session-level metadata */
@@ -92,6 +98,9 @@ export interface SessionSummary {
 
   /** Ordered list of every stage recorded */
   stages: SessionStageRecord[]
+
+  /** Per-intent summaries — LLM-generated if available, raw user messages otherwise */
+  stageSummaries: StageSummaries
 
   /** Mood comparison between I3 and I7 */
   moodDelta: MoodDelta | null
