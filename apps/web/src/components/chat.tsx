@@ -107,11 +107,11 @@ export function ChatMessage({ msg, className }: ChatMessageProps) {
             ? 'bg-primary text-primary-foreground rounded-br-none'
             : 'bg-muted text-foreground rounded-bl-none',
         )}>
-          <p className="text-sm whitespace-pre-wrap wrap-break-word">
+          <div className="text-sm whitespace-pre-wrap wrap-break-word">
             {hasText
               ? msg.text
               : <MessageSpinner />}
-          </p>
+          </div>
         </div>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           {msg ? formatTimestamp(msg.ts) : 'Typing…'}
