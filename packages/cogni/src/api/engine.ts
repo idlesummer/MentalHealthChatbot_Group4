@@ -6,10 +6,10 @@
  * called from any frontend or backend.
  */
 
-import { PROMPT_TECHNIQUES } from '@/prompts'
-import { DistortionClassifier, PromptBuilder, ReplyGenerator, IntentManager } from '@/services'
+import { PROMPT_REGISTRY, PROMPT_TECHNIQUES } from '@/prompts'
+import { DistortionClassifier, ReplyGenerator, IntentManager } from '@/services'
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
-import type { PromptTechnique } from '@/prompts'
+import type { PromptTechnique, IntentPromptConfig } from '@/prompts'
 import type {
   CognitiveDistortionClassification as DistortionClassification,
   Intent,
@@ -66,24 +66,15 @@ export interface ComputeNextIntentParams {
 export class CogniEngine {
   private services: {
     distortionClassifier: DistortionClassifier
-    promptBuilder: PromptBuilder
     replyGenerator: ReplyGenerator
     intentManager: IntentManager
   }
 
   constructor(model: BaseChatModel) {
-
-    // Initialize services
     const distortionClassifier = new DistortionClassifier(model)
-    const promptBuilder = new PromptBuilder()
     const replyGenerator = new ReplyGenerator(model)
-    const intentManager = new IntentManager({ model, promptBuilder })
-    this.services = {
-      promptBuilder,
-      distortionClassifier,
-      replyGenerator,
-      intentManager,
-    }
+    const intentManager = new IntentManager({ model })
+    this.services = { distortionClassifier, replyGenerator, intentManager }
   }
 
   /**
@@ -101,14 +92,23 @@ export class CogniEngine {
     // Step 1: Identify cognitive distortion
     const distortion = await this.services.distortionClassifier.classify(message)
 
-    // Step 2: Build the reply prompt
-    const replyPrompt = this.services.promptBuilder.buildReplyPrompt(
-      message,
-      intent,
-      technique,
-      conversation,
-      distortion,
-    )
+    // Step 2: Build the reply prompt (inlined from former PromptBuilder)
+    const techniquePrompts = PROMPT_REGISTRY[technique]
+    const intentConfig: IntentPromptConfig = techniquePrompts?.[intent] ?? {
+      role: 'Default CBT-base assistant',
+      system: 'Use general CBT-based guidance to assist the user.',
+    }
+
+    const replyPrompt = [
+      'You are a CBT-based assistant helping the user manage their thoughts and emotions.',
+      `Use this conversation history to inform your response:\n${conversation.map(m => `${m.user}: ${m.text}`).join('\n')}`,
+      `Use the following guidelines for this stage:\n${intentConfig.system}`,
+      `Identified Cognitive Distortion: ${distortion.distortion}.`,
+      '',
+      `User Message:\n'${message}'`,
+      '',
+      'Please respond in a way that aligns with the user\'s CBT stage and identified distortion.',
+    ].join('\n')
 
     // Step 3: Generate reply with structured output
     const result = await this.services.replyGenerator.generate(replyPrompt)

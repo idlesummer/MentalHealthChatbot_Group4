@@ -12,7 +12,7 @@ import { INTENTS, INTENT_COMPLETION_REGISTRY, INTENT_ROUTE_REGISTRY } from './in
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import type { Runnable } from '@langchain/core/runnables'
 import type { IntentPromptConfig, PromptTechnique } from '@/prompts'
-import type { Message, PromptBuilder } from '../prompt-builder'
+import type { Message } from '../types'
 import type { Intent } from './intents'
 
 /** Intent transition evaluation result */
@@ -31,14 +31,12 @@ const intentTransitionSchema = z.object({
 
 export interface IntentManagerConfig {
   model: BaseChatModel
-  promptBuilder: PromptBuilder
 }
 
 /** Service for managing intent transitions in the CBT pipeline */
 export class IntentManager {
   private stateMachine: StateMachine<Intent, string, Message[], IntentTransition, string>
   private intentEvaluator: Runnable
-  private config: IntentManagerConfig
   private intentCounts: Record<Intent, number> = {
     I1: 0,
     I2: 0,
@@ -51,8 +49,6 @@ export class IntentManager {
   }
 
   constructor(config: IntentManagerConfig) {
-    this.config = config
-
     // Create structured output model for intent evaluation
     this.intentEvaluator = config.model.withStructuredOutput(intentTransitionSchema)
     this.stateMachine = new StateMachine({
@@ -70,13 +66,22 @@ export class IntentManager {
   private async evaluateTransition(state: Intent, input: string, context: Message[], meta?: string) {
     const intentConfig = this.getIntentConfig(state, 'persona')
     const completionRule = meta ?? 'Decide completion conservatively but fairly.'
-    const prompt = this.config.promptBuilder.buildIntentEvaluationPrompt(
-      state,
-      input,
-      context,
-      intentConfig,
-      completionRule,
-    )
+
+    const prompt = [
+      'You are an intent transition evaluator for a CBT chatbot.',
+      `Use the conversation history to inform your decision:\n${context.map(m => `${m.user}: ${m.text}`).join('\n')}`,
+      `Current Intent: ${state} (${intentConfig.role})`,
+      `User message: '${input}'`,
+      '',
+      'Return strictly this JSON: { moveToNextIntent: boolean, confidence: number (0-1), reason: string }',
+      '',
+      `DECISION RULE (authoritative): ${completionRule}`,
+      '',
+      'If the reason indicates that the goal is fulfilled, this should be reflected in the confidence in order to move to the next intent.',
+      'Intent description (for context):',
+      intentConfig.system,
+    ].join('\n')
+
     const transition = this.intentEvaluator.invoke(prompt) as Promise<IntentTransition>
     return transition
   }
@@ -101,10 +106,10 @@ export class IntentManager {
   /** Get intent configuration for a specific technique */
   private getIntentConfig(intent: Intent, technique: PromptTechnique): IntentPromptConfig {
     const techniquePrompts = PROMPT_REGISTRY[technique]
-    const role = 'Default CBT-base assistant'
-    const system = 'Use general CBT-based guidance to assist the user.'
-    const intentConfig: IntentPromptConfig = techniquePrompts?.[intent] ?? { role, system }
-    return intentConfig
+    return techniquePrompts?.[intent] ?? {
+      role: 'Default CBT-base assistant',
+      system: 'Use general CBT-based guidance to assist the user.',
+    }
   }
 
   /** Get the initial intent for a new session */
