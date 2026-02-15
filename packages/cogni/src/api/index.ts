@@ -4,5 +4,5 @@
  * Re-exports the main API classes and functions from engine.ts
  */
 
-export { CogniEngine, generateCBTResponse } from './engine'
-export type { CogniRequest, CogniResponse, ComputeNextIntentParams } from './engine'
+export { CogniEngine } from './engine'
+export type { CogniRequest, CogniResponse } from './engine'

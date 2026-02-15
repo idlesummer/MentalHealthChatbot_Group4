@@ -7,7 +7,6 @@
 
 export { DistortionClassifier, COGNITIVE_DISTORTION_KEYS, COGNITIVE_DISTORTIONS } from './distortion-classifier'
 export { IntentManager } from './intent-manager'
-export { ReplyParser } from './reply-parser'
 export { ReplyGenerator } from './reply-generator'
 export { SessionTracker, SessionSummaryGenerator, INTENT_LABELS } from './session-summary'
 

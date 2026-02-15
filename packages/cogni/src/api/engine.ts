@@ -31,13 +31,6 @@ export interface CogniResponse {
   distortion?: DistortionClassification
 }
 
-/** Parameters for computing the next intent */
-export interface ComputeNextIntentParams {
-  intent: Intent
-  message: string
-  conversation: Message[]
-}
-
 /**
  * CogniEngine - The main CBT pipeline engine
  *
@@ -150,14 +143,4 @@ export class CogniEngine {
   resetIntentCounts() {
     return this.services.intentManager.resetIntentCounts()
   }
-}
-
-/**
- * Simplified function-based API (alternative to class-based API)
- *
- * This provides a simpler interface for one-off calls without instantiating the engine.
- */
-export async function generateCBTResponse(model: BaseChatModel, params: CogniRequest) {
-  const engine = new CogniEngine(model)
-  return engine.respond(params)
 }
