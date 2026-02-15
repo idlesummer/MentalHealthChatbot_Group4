@@ -14,6 +14,7 @@ export type PromptTechnique =
   | 'chain-of-thought'
   | 'persona'
   | 'plan-and-solve'
+  | 'pebbles'
 
 /** Configuration for a specific intent prompt */
 export type IntentPromptConfig = {

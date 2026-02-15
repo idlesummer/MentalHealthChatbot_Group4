@@ -9,6 +9,7 @@ import { CHAIN_OF_THOUGHT_PROMPTS } from './chain-of-thought'
 import { FEW_SHOT_PROMPTS } from './few-shot'
 import { PERSONA_PROMPTS } from './persona'
 import { PLAN_AND_SOLVE_PROMPTS } from './plan-and-solve'
+import { PEBBLES_PROMPTS } from './pebbles'
 import type { PromptRegistry, PromptTechnique } from './types'
 
 /**
@@ -23,6 +24,7 @@ export const PROMPT_REGISTRY: PromptRegistry = {
   'chain-of-thought': CHAIN_OF_THOUGHT_PROMPTS,
   'persona':          PERSONA_PROMPTS,
   'plan-and-solve':   PLAN_AND_SOLVE_PROMPTS,
+  'pebbles':          PEBBLES_PROMPTS
 } as const
 
 /** List of available prompt technique names */
@@ -34,4 +36,5 @@ export {
   FEW_SHOT_PROMPTS,
   CHAIN_OF_THOUGHT_PROMPTS,
   PLAN_AND_SOLVE_PROMPTS,
+  PEBBLES_PROMPTS
 }

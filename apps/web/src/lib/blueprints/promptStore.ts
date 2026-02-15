@@ -7,6 +7,6 @@ interface PromptState {
 }
 
 export const usePromptStateStore = create<PromptState> ((set) => ({
-    promptTechnique: 'default',
+    promptTechnique: 'pebbles',
     setPromptTechnique: (promptTechnique) => set({ promptTechnique }),
 }))
