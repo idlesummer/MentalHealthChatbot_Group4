@@ -92,7 +92,7 @@ export class CogniEngine {
     // Step 1: Identify cognitive distortion
     const distortion = await this.services.distortionClassifier.classify(message)
 
-    // Step 2: Build the reply prompt (inlined from former PromptBuilder)
+    // Step 2: Build the reply prompt
     const techniquePrompts = PROMPT_REGISTRY[technique]
     const intentConfig: IntentPromptConfig = techniquePrompts?.[intent] ?? {
       role: 'Default CBT-base assistant',
