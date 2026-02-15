@@ -61,6 +61,14 @@ export default function ChatTestPage() {
     addMessage(reply, 'Pebbles')
 
     // Track the turn for summary
+    const newRecord = {
+      intent,
+      userMessage: text,
+      assistantReply: reply,
+      distortion,
+      nextIntent: identifiedIntent,
+      timestamp: Date.now(),
+    }
     recordTurn({
       intent,
       userMessage: text,
@@ -68,16 +76,26 @@ export default function ChatTestPage() {
       nextIntent: identifiedIntent,
       distortion,
     })
+
+    // Auto-update summary in the background
+    const updatedRecords = [...records, newRecord]
+    setSummaryLoading(true)
+    generateSessionSummary(updatedRecords, promptTechnique)
+      .then(setSummary)
+      .finally(() => setSummaryLoading(false))
   }
 
-  // Generate summary
+  // Generate / refresh summary (also switches to summary view on mobile)
   const handleViewSummary = async () => {
     setView('summary')
     if (records.length === 0) return
     setSummaryLoading(true)
-    const result = await generateSessionSummary(records, promptTechnique)
-    setSummary(result)
-    setSummaryLoading(false)
+    try {
+      const result = await generateSessionSummary(records, promptTechnique)
+      setSummary(result)
+    } finally {
+      setSummaryLoading(false)
+    }
   }
 
   // Clear everything
@@ -98,7 +116,7 @@ export default function ChatTestPage() {
   return (
     <div className="flex gap-4 h-full max-w-[120rem] mx-auto">
       {/* Left: Chat */}
-      <div className={view === 'summary' ? 'hidden lg:flex lg:w-1/2' : 'flex w-full'}>
+      <div className={view === 'summary' ? 'hidden lg:flex lg:w-1/2' : 'flex w-full lg:w-1/2'}>
         <Chat>
           {/* Header */}
           <div className="flex flex-row items-center pt-4 px-8 space-x-4">
@@ -162,39 +180,41 @@ export default function ChatTestPage() {
         </Chat>
       </div>
 
-      {/* Right: Summary panel */}
-      {view === 'summary' && (
-        <div className="flex flex-col w-full lg:w-1/2 bg-background rounded-2xl shadow-sm overflow-hidden">
-          {/* Summary header */}
-          <div className="flex items-center justify-between pt-4 px-6 pb-2">
-            <h2 className="text-sm font-semibold">Session Summary</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setView('chat')}
-              className="gap-1.5 text-xs"
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              Back to chat
-            </Button>
-          </div>
-
-          {/* Summary content */}
-          <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-4">
-            {summaryLoading ? (
-              <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
-                Generating summary...
-              </div>
-            ) : summary ? (
-              <SessionSummaryPanel summary={summary} />
-            ) : (
-              <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
-                No session data to summarize. Chat first, then click Summary.
-              </div>
-            )}
-          </div>
+      {/* Right: Summary panel — always visible on lg, toggled on mobile */}
+      <div className={
+        view === 'summary'
+          ? 'flex flex-col w-full lg:w-1/2 bg-background rounded-2xl shadow-sm overflow-hidden'
+          : 'hidden lg:flex flex-col lg:w-1/2 bg-background rounded-2xl shadow-sm overflow-hidden'
+      }>
+        {/* Summary header */}
+        <div className="flex items-center justify-between pt-4 px-6 pb-2">
+          <h2 className="text-sm font-semibold">Session Summary</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setView('chat')}
+            className="gap-1.5 text-xs lg:hidden"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            Back to chat
+          </Button>
         </div>
-      )}
+
+        {/* Summary content */}
+        <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-4">
+          {summaryLoading ? (
+            <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
+              Generating summary...
+            </div>
+          ) : summary ? (
+            <SessionSummaryPanel summary={summary} />
+          ) : (
+            <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
+              No session data yet. Start chatting to see the summary update live.
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
