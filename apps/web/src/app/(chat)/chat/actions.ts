@@ -68,10 +68,10 @@ export async function generateResponse(
 
 
 export async function sendDataSMTP(payload: SessionExportPayload) {
-  const exportedBy = (payload.exportedBy || '').trim();
-  if (!exportedBy) throw new Error('Name is required');
+  const exportedBy = (payload.exportedBy || '').trim()
+  if (!exportedBy) throw new Error('Name is required')
   if (!Array.isArray(payload.records )|| !payload.records.length) {
-    throw new Error('No Records Exists.');
+    throw new Error('No Records Exists.')
   }
 
   const transporter = nodemailer.createTransport({
