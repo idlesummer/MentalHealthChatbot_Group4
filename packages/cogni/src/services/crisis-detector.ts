@@ -69,43 +69,39 @@ const CRISIS_DETECTION_SYSTEM_PROMPT = [
 /** Safe template responses keyed by category */
 export const CRISIS_SAFE_RESPONSES: Record<CrisisCategory, string> = {
   none: '',
-
-  suicidal_ideation:
-    'I hear you, and I want you to know that what you\'re feeling matters. ' +
-    'Please reach out to someone who can help right now:\n\n' +
-    '- **988 Suicide & Crisis Lifeline** — call or text **988** (US)\n' +
-    '- **Crisis Text Line** — text **HOME** to **741741**\n' +
-    '- **International Association for Suicide Prevention** — https://www.iasp.info/resources/Crisis_Centres/\n\n' +
-    'You don\'t have to go through this alone. A trained counselor can talk with you right now.',
+suicidal_ideation:
+    'I hear you, and I want you to know that what you’re feeling matters. ' +
+    'If you are in immediate danger or might harm yourself, please call your local emergency number right now or go to the nearest emergency department.\n\n' +
+    '- **International Association for Suicide Prevention (IASP)** — find crisis centers by country: https://www.iasp.info/resources/Crisis_Centres/\n' +
+    '- **Befrienders Worldwide** — emotional support helplines by country: https://befrienders.org/\n\n' +
+    'You don’t have to go through this alone. A trained counselor can support you right now.',
 
   self_harm:
-    'I can see you\'re going through a really difficult time. ' +
-    'Please consider reaching out to a professional who can support you:\n\n' +
-    '- **988 Suicide & Crisis Lifeline** — call or text **988** (US)\n' +
-    '- **Crisis Text Line** — text **HOME** to **741741**\n\n' +
-    'Your safety is the most important thing right now. You deserve support.',
+    'I’m really sorry you’re going through this. Your safety is the most important thing right now. ' +
+    'If you are in immediate danger, please call your local emergency number or go to the nearest emergency department.\n\n' +
+    '- **IASP** — crisis centers by country: https://www.iasp.info/resources/Crisis_Centres/\n' +
+    '- **Befrienders Worldwide** — emotional support by country: https://befrienders.org/\n\n' +
+    'If you can, please reach out to someone you trust or a professional who can help.',
 
   harm_to_others:
-    'It sounds like things are really intense right now. ' +
-    'I\'d encourage you to speak with someone who can help you work through these feelings safely:\n\n' +
-    '- **988 Suicide & Crisis Lifeline** — call or text **988** (US)\n' +
-    '- **Emergency services** — call **911** if there is immediate danger\n\n' +
-    'Talking to a professional can make a real difference.',
+    'It sounds like things are really intense right now. If there is immediate danger, please contact your local emergency services right away.\n\n' +
+    '- **IASP** — crisis support by country: https://www.iasp.info/resources/Crisis_Centres/\n' +
+    '- **Befrienders Worldwide** — emotional support by country: https://befrienders.org/\n\n' +
+    'Talking to a mental health professional or crisis counselor can help you work through this safely.',
 
   abuse_or_violence:
-    'Thank you for trusting me with something so difficult. ' +
-    'You deserve to be safe, and there are people who can help:\n\n' +
-    '- **National Domestic Violence Hotline** — call **1-800-799-7233** or text **START** to **88788**\n' +
-    '- **RAINN (sexual assault)** — call **1-800-656-4673**\n' +
-    '- **Childhelp National Child Abuse Hotline** — call **1-800-422-4453**\n\n' +
+    'Thank you for trusting me with something so difficult. You deserve to be safe. ' +
+    'If you are in immediate danger, please call your local emergency number right now.\n\n' +
+    '- **IASP** — crisis and support services by country: https://www.iasp.info/resources/Crisis_Centres/\n' +
+    '- **Befrienders Worldwide** — emotional support by country: https://befrienders.org/\n\n' +
     'You are not alone, and this is not your fault.',
 
   severe_distress:
-    'I can tell you\'re going through something very overwhelming right now. ' +
-    'Please consider talking to someone who can help:\n\n' +
-    '- **988 Suicide & Crisis Lifeline** — call or text **988** (US)\n' +
-    '- **Crisis Text Line** — text **HOME** to **741741**\n\n' +
-    'It\'s okay to ask for help. A counselor can support you through this moment.',
+    'I can tell you’re going through something overwhelming right now. It’s okay to ask for help. ' +
+    'If you are in immediate danger, please call your local emergency number or go to the nearest emergency department.\n\n' +
+    '- **IASP** — crisis support by country: https://www.iasp.info/resources/Crisis_Centres/\n' +
+    '- **Befrienders Worldwide** — emotional support by country: https://befrienders.org/\n\n' +
+    'If you can, consider reaching out to someone you trust or a professional who can support you through this moment.',
 }
 
 /** Service for screening user messages for crisis-level risk */
