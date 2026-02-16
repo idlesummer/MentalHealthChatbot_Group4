@@ -42,7 +42,7 @@ export function ChatHeader() {
         <AvatarFallback>P</AvatarFallback>
       </Avatar>
       <div className="min-w-0">
-        <h1 className="truncate text-base font-semibold">Pebbles the Pibble</h1>
+        <h1 className="truncate text-base font-semibold">Pebbles</h1>
         <p className="text-xs text-green-400">Online</p>
       </div>
 
@@ -67,7 +67,7 @@ export function ChatHeader() {
 
 
       <SendSessionButton/>
-      
+
       <Button
         variant="secondary"
         size="icon"
