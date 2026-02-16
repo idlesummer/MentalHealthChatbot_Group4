@@ -1,24 +1,24 @@
 # Cogni Monorepo
 
-A monorepo containing the **Cogni** CBT engine and related applications for building mental health chatbot systems.
+A monorepo containing the **Cogni** CBT engine and the **Pebbles** web chatbot for building mental health support systems.
 
 ---
 
-## 🎯 What’s Inside
+## What's Inside
 
 This repository contains:
 
 * **[@rainev/cogni](./packages/cogni/)** – A standalone, reusable Cognitive Behavioral Therapy (CBT) engine for LLM-powered therapeutic conversations
+* **[Web App](./apps/web/)** – A Next.js 16 web application (chat interface + session analytics) powered by the Cogni engine
 * **Examples** – Working examples demonstrating various use cases and prompt techniques
-* **Apps** – Web and application-level integrations
 
 ---
 
-## 🚀 Quick Start (Monorepo)
+## Quick Start (Monorepo)
 
 ### Prerequisites
 
-* Node.js ≥ 20
+* Node.js >= 20
 * **pnpm** (recommended)
 
 ```bash
@@ -45,22 +45,29 @@ pnpm -r --if-present test
 pnpm -r --if-present lint
 ```
 
-> ⚠️ Do not run `npm install` in this repository.
+> Do not run `npm install` in this repository.
 > Dependency installation is managed centrally with pnpm.
 
 ---
 
-## 📦 Package Structure
+## Package Structure
 
 ```
 .
 ├── packages/
-│   └── cogni/              # CBT engine package
-│       ├── src/            # Source code
+│   └── cogni/              # CBT engine package (@rainev/cogni)
+│       ├── src/
+│       │   ├── api/        # CogniEngine orchestrator
+│       │   ├── services/   # Core services (distortion, crisis, intent, reply, session)
+│       │   ├── prompts/    # 6 prompt engineering techniques
+│       │   └── utils/      # Finite state machine
 │       ├── examples/       # Usage examples
-│       ├── docs/           # Documentation
-│       └── README.md       # Package documentation
-├── apps/                   # Web / application integrations
+│       └── docs/           # Architecture documentation
+├── apps/
+│   └── web/                # Next.js 16 web application
+│       ├── src/app/        # App router pages (chat, chat-test)
+│       ├── src/components/ # Chat UI, session summary panel
+│       └── src/lib/        # Zustand stores, utilities
 ├── pnpm-workspace.yaml     # Workspace definition
 ├── pnpm-lock.yaml          # Lockfile (single source of truth)
 └── package.json            # Monorepo root
@@ -68,7 +75,7 @@ pnpm -r --if-present lint
 
 ---
 
-## 🧠 What is Cogni?
+## What is Cogni?
 
 Cogni is an LLM-powered CBT engine that implements evidence-based therapeutic techniques. It guides users through an 8-stage process:
 
@@ -81,9 +88,36 @@ Cogni is an LLM-powered CBT engine that implements evidence-based therapeutic te
 7. **Mood Re-rating** – Measure emotional shift
 8. **Coping Strategy** – Provide actionable strategies
 
+### Key Capabilities
+
+- **Crisis Detection** – LLM-powered safety screening that intercepts HIGH/MED risk messages before they enter the CBT pipeline, serving safe template responses with crisis hotline information
+- **Cognitive Distortion Classification** – Identifies 10 cognitive distortions (all-or-nothing thinking, catastrophizing, etc.)
+- **6 Prompt Techniques** – Default, Few-shot, Chain-of-Thought, Persona, Plan-and-Solve, and Pebbles (hybrid)
+- **Session Analytics** – Mood delta tracking, distortion profiling, intent funnels, Mermaid flowcharts, and clinician-facing text summaries
+
 ---
 
-## 🛠️ Development
+## Web Application (Pebbles)
+
+The web app at `apps/web/` provides two chat interfaces:
+
+- **`/chat`** – Production chat experience with the Pebbles chatbot
+- **`/chat-test`** – Development chat with a live session summary panel (mood delta, distortion profile, flowchart, stage notes)
+
+### Running the Web App
+
+```bash
+# From the monorepo root
+cd apps/web
+cp .env.example .env  # Add your OPENAI_API_KEY
+pnpm dev
+```
+
+**Stack:** Next.js 16, React 19, Zustand, Radix UI, Tailwind CSS 4, LangChain + OpenAI
+
+---
+
+## Development
 
 ### Building the Cogni Package
 
@@ -121,7 +155,7 @@ tsx index.ts
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 * [Cogni Package README](./packages/cogni/README.md)
 * [Architecture Guide](./packages/cogni/docs/ARCHITECTURE.md)
@@ -129,7 +163,7 @@ tsx index.ts
 
 ---
 
-## 📦 Using Cogni as a Standalone Package
+## Using Cogni as a Standalone Package
 
 If you are only interested in the Cogni engine:
 
@@ -143,7 +177,7 @@ Cogni behaves like an independent package and can be published or consumed separ
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 This is a group project for Mental Health Chatbot development.
 
@@ -156,13 +190,13 @@ This is a group project for Mental Health Chatbot development.
 
 ---
 
-## 📄 License
+## License
 
 MIT – see [LICENSE](./packages/cogni/LICENSE)
 
 ---
 
-## 🔗 Links
+## Links
 
 * [Cogni Package](./packages/cogni/)
 * [Examples](./packages/cogni/examples/)

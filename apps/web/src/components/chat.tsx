@@ -140,6 +140,9 @@ export function ChatInput({ value, onChange, onSubmit }: ChatInputProps) {
   }
   return (
     <div className="p-0">
+      <p className="text-center text-xs text-muted-foreground/60 pb-1">
+        Pebbles is powered by AI and may not always be accurate. Not a substitute for professional help.
+      </p>
       <div className="px-3 pb-6 w-full">
         <form
           onSubmit={e => { e.preventDefault(); onSubmit() }}

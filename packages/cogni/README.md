@@ -1,6 +1,6 @@
 # Cogni - Cognitive Behavioral Therapy Engine
 
-A standalone, reusable CBT (Cognitive Behavioral Therapy) pipeline implementation with support for 8-stage intent-driven workflow, cognitive distortion classification, and multiple prompt engineering techniques.
+A standalone, reusable CBT (Cognitive Behavioral Therapy) pipeline implementation with support for an 8-stage intent-driven workflow, cognitive distortion classification, crisis detection, session analytics, and multiple prompt engineering techniques.
 
 ## Table of Contents
 
@@ -34,28 +34,23 @@ A standalone, reusable CBT (Cognitive Behavioral Therapy) pipeline implementatio
 
 ## Features
 
-✅ **8-Stage Intent System** - Structured progression through CBT stages
-✅ **Cognitive Distortion Classification** - Classifies 10 cognitive distortions
-✅ **4 Prompt Techniques** - Persona, Few-shot, Chain-of-Thought, Plan-and-Solve
-✅ **Flexible API** - Class-based or function-based interfaces
-✅ **Type-Safe** - Full TypeScript support with comprehensive types
-✅ **LLM Agnostic** - Works with any LLM through dependency injection
-✅ **Isolated & Reusable** - No external dependencies on UI or specific frameworks
+- **8-Stage Intent System** - Structured progression through CBT stages with completion rules
+- **Crisis Detection** - LLM-powered safety screening (LOW/MED/HIGH risk) with safe template responses
+- **Cognitive Distortion Classification** - Classifies 10 cognitive distortions with confidence scores
+- **6 Prompt Techniques** - Default, Few-shot, Chain-of-Thought, Persona, Plan-and-Solve, and Pebbles
+- **Session Analytics** - Mood delta tracking, distortion profiles, intent funnels, Mermaid flowcharts, clinician summaries
+- **Type-Safe** - Full TypeScript support with comprehensive types
+- **LLM Agnostic** - Works with any LangChain-compatible `BaseChatModel` through dependency injection
+- **Isolated & Reusable** - No external dependencies on UI or specific frameworks
 
 ---
 
 ## Installation
 
-Since this is an internal module, import it directly from the source:
+Since this is a workspace package, import it from within the monorepo:
 
 ```typescript
-import { CogniEngine } from '@/cogni/src';
-```
-
-Or if published as a package:
-
-```bash
-npm install @mental-health-chatbot/cogni
+import { CogniEngine } from '@rainev/cogni'
 ```
 
 ---
@@ -65,55 +60,61 @@ npm install @mental-health-chatbot/cogni
 ### Basic Usage
 
 ```typescript
-import { CogniEngine } from '@/cogni/src';
-import { ChatOpenAI } from '@langchain/openai';
-import { z } from 'zod';
+import { ChatOpenAI } from '@langchain/openai'
+import { CogniEngine } from '@rainev/cogni'
 
-// 1. Set up your LLM models
-const mainModel = new ChatOpenAI({
+// 1. Create an LLM model
+const model = new ChatOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  model: "gpt-4o-mini",
+  model: 'gpt-4o-mini',
   temperature: 0.2,
-});
+})
 
-const distortionClassifier = mainModel.withStructuredOutput(
-  z.object({
-    distortion: z.enum([
-      "All-or-Nothing Thinking",
-      "Overgeneralization",
-      // ... other distortions
-    ]),
-    confidence: z.number().min(0).max(1),
-    rationale: z.string(),
-  })
-);
-
-const intentEvaluator = mainModel.withStructuredOutput(
-  z.object({
-    moveToNextIntent: z.boolean(),
-    confidence: z.number().min(0).max(1),
-    reason: z.string(),
-  })
-);
-
-// 2. Create the engine
-const engine = new CogniEngine({
-  mainModel,
-  distortionClassifier,
-  intentEvaluator,
-});
+// 2. Create the engine (single model handles all services internally)
+const engine = new CogniEngine(model)
 
 // 3. Generate a response
 const result = await engine.respond({
-  message: "I failed my exam and I feel terrible.",
-  intent: "I1",
+  message: 'I failed my exam and I feel terrible.',
+  intent: 'I1',
   conversation: [],
-  technique: "persona",
-});
+  technique: 'pebbles',
+})
 
-console.log(result.reply); // Assistant's therapeutic response
-console.log(result.nextIntent); // Next CBT stage (e.g., "I2")
-console.log(result.distortion); // Identified distortion
+console.log(result.reply)       // AI's therapeutic response
+console.log(result.nextIntent)  // Next CBT stage (e.g., 'I2')
+console.log(result.distortion)  // Identified cognitive distortion
+```
+
+### Crisis Detection
+
+```typescript
+import { CrisisDetector } from '@rainev/cogni'
+
+const detector = new CrisisDetector(model)
+const crisis = await detector.classify('I feel like giving up on everything')
+
+if (CrisisDetector.requiresIntervention(crisis.risk)) {
+  // risk is 'MED' or 'HIGH' — serve a safe response
+  const safeReply = CrisisDetector.getSafeResponse(crisis.category)
+  console.log(safeReply) // Crisis hotline info
+} else {
+  // risk is 'LOW' — proceed with normal CBT pipeline
+}
+```
+
+### Session Summary
+
+```typescript
+import { SessionSummaryGenerator } from '@rainev/cogni'
+
+const generator = new SessionSummaryGenerator()
+const summary = generator.generate(records, 'pebbles')
+
+console.log(summary.moodDelta)         // { preScore: 70, postScore: 40, delta: -30 }
+console.log(summary.distortionProfile) // [{ distortion: 'catastrophizing', count: 3, ... }]
+console.log(summary.mermaidChart)      // Mermaid flowchart string
+console.log(summary.textSummary)       // Clinician-facing text summary
 ```
 
 ---
@@ -127,84 +128,131 @@ The main class for interacting with the CBT pipeline.
 #### Constructor
 
 ```typescript
-constructor(config: CogniEngineConfig)
+constructor(model: BaseChatModel)
 ```
 
-**Parameters:**
-- `config.mainModel` - The main LLM model for generating responses
-- `config.distortionClassifier` - Model for classifying cognitive distortions
-- `config.intentEvaluator` - Model for evaluating intent transitions
+Takes a single LangChain-compatible chat model. Internally creates `DistortionClassifier`, `ReplyGenerator`, and `IntentManager` services.
 
 #### Methods
 
 ##### `respond(params: CogniRequest): Promise<CogniResponse>`
 
-Generates a CBT response for the user's message.
+Generates a CBT response for the user's message. Orchestrates: distortion classification, prompt construction, reply generation, and intent transition evaluation.
 
 **Parameters:**
 ```typescript
 {
-  message: string;              // User's message
-  intent: string;        // Current CBT stage (I1-I8)
-  conversation: Message[]; // Full conversation history
-  technique: PromptTechnique; // Selected prompting technique
+  message: string           // User's message
+  intent: Intent            // Current CBT stage (I1-I8)
+  conversation: Message[]   // Full conversation history
+  technique: PromptTechnique // Selected prompting technique
 }
 ```
 
 **Returns:**
 ```typescript
 {
-  reply: string;                // Assistant's response
-  nextIntent: string;           // Next CBT stage
-  distortion?: {       // Identified distortion
-    distortion: string;
-    confidence: number;
-    rationale: string;
-  };
+  reply: string                       // Therapeutic response
+  nextIntent: Intent                  // Next CBT stage
+  distortion?: {                      // Identified distortion
+    distortion: CognitiveDistortion
+    confidence: number
+    rationale: string
+  }
 }
 ```
 
 ##### `identifyCognitiveDistortions(message: string): Promise<CognitiveDistortionClassification>`
 
-Identifies cognitive distortions in a message.
-
-##### `computeNextIntent(params): Promise<string>`
-
-Evaluates whether to transition to the next intent.
+Identifies cognitive distortions in a message (standalone, outside the main pipeline).
 
 ##### `getIntents(): Intent[]`
 
-Returns all available intents: `["I1", "I2", "I3", "I4", "I5", "I6", "I7", "I8"]`
+Returns all available intents: `['I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'I8']`
 
 ##### `getInitialIntent(): Intent`
 
-Returns the initial intent for a new session: `"I1"`
+Returns the initial intent for a new session: `'I1'`
 
 ##### `getPromptTechniques(): PromptTechnique[]`
 
-Returns available prompt techniques: `["default", "few-shot", "chain-of-thought", "persona", "plan-and-solve"]`
+Returns available prompt techniques: `['default', 'few-shot', 'chain-of-thought', 'persona', 'plan-and-solve', 'pebbles']`
+
+##### `getIntentCounts(): Record<Intent, number>`
+
+Returns how many times each intent has been visited (for analytics).
+
+##### `resetIntentCounts(): void`
+
+Resets intent counters (useful when starting a new session).
 
 ---
 
-### Function-Based API
+### `CrisisDetector`
 
-For one-off calls without instantiating the engine:
+LLM-powered safety screening that classifies user messages by risk level.
+
+#### Constructor
 
 ```typescript
-import { generateCBTResponse } from '@/cogni/src';
+constructor(model: BaseChatModel)
+```
 
-const result = await generateCBTResponse({
-  // Request parameters
-  message: "I'm worried about my presentation",
-  intent: "I1",
-  conversation: [],
-  technique: "persona",
+#### Methods
 
-  // Model dependencies
-  mainModel,
-  distortionClassifier,
-  intentEvaluator,
-});
+##### `classify(message: string): Promise<CrisisClassification>`
+
+Returns:
+```typescript
+{
+  risk: 'LOW' | 'MED' | 'HIGH'
+  category: 'none' | 'suicidal_ideation' | 'self_harm' | 'harm_to_others' | 'abuse_or_violence' | 'severe_distress'
+  reasoning: string
+}
+```
+
+##### `static requiresIntervention(risk: RiskLevel): boolean`
+
+Returns `true` for `MED` or `HIGH`.
+
+##### `static getSafeResponse(category: CrisisCategory): string`
+
+Returns a pre-written safe response with crisis hotline information for the given category.
+
+---
+
+### `SessionSummaryGenerator`
+
+Stateless transformer that converts session records into a complete summary.
+
+#### `generate(records, technique, options?): SessionSummary`
+
+Returns:
+```typescript
+{
+  metadata: { totalTurns, startTime, endTime, durationMs, completedFullCycle, technique, finalIntent }
+  stages: SessionStageRecord[]
+  stageSummaries: Partial<Record<Intent, string>>
+  moodDelta: MoodDelta | null
+  distortionProfile: DistortionProfile[]
+  intentFunnel: IntentFunnel[]
+  mermaidChart: string
+  textSummary: string
+}
+```
+
+---
+
+### `SessionTracker`
+
+Collects structured data during a live CBT session.
+
+```typescript
+const tracker = new SessionTracker()
+tracker.record({ intent, userMessage, response, technique })
+// After session:
+const records = tracker.getRecords()
+const technique = tracker.getTechnique()
 ```
 
 ---
@@ -214,33 +262,46 @@ const result = await generateCBTResponse({
 ### Directory Structure
 
 ```
-src/cogni/
-├── src/
-│   ├── core/
-│   │   ├── types.ts          # TypeScript type definitions
-│   │   ├── intent.ts         # Intent routing & transitions
-│   │   └── distortion.ts     # Cognitive distortion classification
-│   ├── prompts/
-│   │   ├── Persona.ts        # Persona-based prompts
-│   │   ├── Fewshot.ts        # Few-shot learning prompts
-│   │   ├── ChainOfThought.ts # Chain-of-thought prompts
-│   │   ├── PlanAndSolve.ts   # Plan-and-solve prompts
-│   │   └── index.ts          # Prompt exports
-│   ├── api/
-│   │   └── index.ts          # Main API interface
-│   └── index.ts              # Main export file
-├── package.json
-├── tsconfig.json
-└── README.md
+src/
+├── api/
+│   ├── engine.ts                  # CogniEngine orchestrator
+│   └── index.ts                   # API exports
+├── services/
+│   ├── distortion-classifier.ts   # Cognitive distortion detection (10 types)
+│   ├── crisis-detector.ts         # Crisis risk screening (LOW/MED/HIGH)
+│   ├── reply-generator.ts         # Therapeutic reply generation (structured output)
+│   ├── intent-manager/
+│   │   ├── manager.ts             # State machine-driven intent transitions
+│   │   ├── intents.ts             # Intent routes & completion rules
+│   │   └── index.ts
+│   ├── session-summary/
+│   │   ├── tracker.ts             # Session data collection
+│   │   ├── generator.ts           # Summary computation (mood delta, distortion profile, etc.)
+│   │   ├── types.ts               # SessionSummary, MoodDelta, DistortionProfile types
+│   │   └── index.ts
+│   ├── types.ts                   # Message interface
+│   └── index.ts                   # Service exports
+├── prompts/
+│   ├── persona.ts                 # Persona-based prompts (I1-I8)
+│   ├── few-shot.ts                # Few-shot learning prompts (I1-I8)
+│   ├── chain-of-thought.ts        # Chain-of-thought prompts (I1-I8)
+│   ├── plan-and-solve.ts          # Plan-and-solve prompts (I1-I8)
+│   ├── pebbles.ts                 # Pebbles hybrid prompts (I1-I8)
+│   ├── registry.ts                # Central prompt technique registry
+│   ├── types.ts                   # PromptTechnique, IntentPromptConfig types
+│   └── index.ts
+├── utils/
+│   └── state-machine.ts           # Generic finite state machine
+└── index.ts                       # Main entry point (re-exports all public APIs)
 ```
 
 ### Key Concepts
 
 #### **Intents**
 Intents represent the 8 stages of the CBT process. Each intent has:
-- **Completion Rules**: Criteria for advancing to the next stage
-- **Prompt Configuration**: Stage-specific guidance for the LLM
-- **Routing**: Automatic progression (I1→I2→I3...→I8→I1)
+- **Completion Rules**: LLM-evaluated criteria for advancing (defined in `INTENT_COMPLETION_REGISTRY`)
+- **Prompt Configuration**: Stage-specific guidance for the LLM (per technique)
+- **Routing**: Automatic progression via state machine (I1 -> I2 -> ... -> I8 -> I1)
 
 #### **Cognitive Distortions**
 The engine identifies 10 cognitive distortions:
@@ -255,12 +316,22 @@ The engine identifies 10 cognitive distortions:
 9. Labeling
 10. Personalization & Blame
 
+#### **Crisis Categories**
+The crisis detector screens for:
+- Suicidal ideation
+- Self-harm
+- Harm to others
+- Abuse or violence
+- Severe distress
+
 #### **Prompt Techniques**
-Four prompting strategies with identical CBT workflows:
+Six prompting strategies with identical CBT workflows:
+- **Default**: No custom prompts — generic CBT guidance
 - **Persona**: Role-based guidance with clear boundaries
 - **Few-shot**: Learning through 6-7 examples per stage
-- **Chain-of-Thought**: Explicit reasoning steps
-- **Plan-and-Solve**: Two-phase execution (plan → solve)
+- **Chain-of-Thought**: Explicit step-by-step reasoning
+- **Plan-and-Solve**: Two-phase execution (plan then solve)
+- **Pebbles**: Hybrid approach combining multiple techniques (default for the web app)
 
 ---
 
@@ -269,104 +340,107 @@ Four prompting strategies with identical CBT workflows:
 ### Example 1: Complete Session Flow
 
 ```typescript
-import { CogniEngine } from '@/cogni/src';
+import { ChatOpenAI } from '@langchain/openai'
+import { CogniEngine } from '@rainev/cogni'
 
-const engine = new CogniEngine({ /* ... */ });
+const model = new ChatOpenAI({ model: 'gpt-4o-mini' })
+const engine = new CogniEngine(model)
 
 // Stage 1: Situation Identification
 const stage1 = await engine.respond({
-  message: "My boss yelled at me in the meeting",
-  intent: "I1",
+  message: 'My boss yelled at me in the meeting',
+  intent: 'I1',
   conversation: [],
-  technique: "persona",
-});
-// nextIntent: "I2" (ready to identify automatic thought)
+  technique: 'pebbles',
+})
+// stage1.nextIntent: 'I2' (ready to identify automatic thought)
 
 // Stage 2: Automatic Thought
 const stage2 = await engine.respond({
-  message: "I thought I must be terrible at my job",
-  intent: "I2",
+  message: 'I thought I must be terrible at my job',
+  intent: stage1.nextIntent,
   conversation: [/* previous messages */],
-  technique: "persona",
-});
-// nextIntent: "I3" (ready for mood rating)
+  technique: 'pebbles',
+})
+// stage2.nextIntent: 'I3' (ready for mood rating)
 
 // ... continue through all 8 stages
 ```
 
-### Example 2: Switching Prompt Techniques
-
-```typescript
-// Use different techniques for different users
-const techniques = ["persona", "few-shot", "chain-of-thought", "plan-and-solve"];
-
-for (const technique of techniques) {
-  const result = await engine.respond({
-    message: userMessage,
-    intent: intent,
-    conversation: history,
-    technique: technique,
-  });
-
-  console.log(`${technique}: ${result.reply}`);
-}
-```
-
-### Example 3: Cognitive Distortion Analysis
+### Example 2: Cognitive Distortion Analysis
 
 ```typescript
 const messages = [
-  "I always mess things up",
-  "Nobody likes me",
-  "This will be a disaster",
-];
+  'I always mess things up',
+  'Nobody likes me',
+  'This will be a disaster',
+]
 
 for (const message of messages) {
-  const distortion = await engine.identifyCognitiveDistortions(message);
-  console.log(`"${message}" → ${distortion.distortion} (${distortion.confidence})`);
+  const distortion = await engine.identifyCognitiveDistortions(message)
+  console.log(`"${message}" -> ${distortion.distortion} (${distortion.confidence})`)
 }
 
 // Output:
-// "I always mess things up" → Overgeneralization (0.92)
-// "Nobody likes me" → All-or-Nothing Thinking (0.88)
-// "This will be a disaster" → Catastrophizing (0.95)
+// "I always mess things up" -> overgeneralization (0.92)
+// "Nobody likes me" -> all-or-nothing thinking (0.88)
+// "This will be a disaster" -> catastrophizing (0.95)
+```
+
+### Example 3: Crisis Detection Gate
+
+```typescript
+import { CrisisDetector, CogniEngine } from '@rainev/cogni'
+
+const detector = new CrisisDetector(model)
+const engine = new CogniEngine(model)
+
+async function handleUserMessage(message: string, intent: Intent, conversation: Message[]) {
+  // Step 0: Screen for crisis
+  const crisis = await detector.classify(message)
+
+  if (CrisisDetector.requiresIntervention(crisis.risk)) {
+    return { reply: CrisisDetector.getSafeResponse(crisis.category), intent }
+  }
+
+  // Step 1: Normal CBT pipeline
+  const result = await engine.respond({ message, intent, conversation, technique: 'pebbles' })
+  return { reply: result.reply, intent: result.nextIntent }
+}
 ```
 
 ---
 
-## Integration with Existing App
-
-To integrate Cogni with the existing chatbot:
+## Integration with a Web App
 
 ```typescript
-// In your actions.ts or equivalent
-import { CogniEngine } from '@/cogni/src';
+// In your server action (e.g., actions.ts)
+'use server'
+import { ChatOpenAI } from '@langchain/openai'
+import { CogniEngine, CrisisDetector } from '@rainev/cogni'
+import type { Intent, PromptTechnique, Message } from '@rainev/cogni'
 
-// Initialize once
-const cogniEngine = new CogniEngine({
-  mainModel: model,
-  distortionClassifier: classifyModel,
-  intentEvaluator: determineModel,
-});
+const model = new ChatOpenAI({ apiKey: process.env.OPENAI_API_KEY!, model: 'gpt-4o-mini' })
+const engine = new CogniEngine(model)
+const crisisDetector = new CrisisDetector(model)
 
-// In your respond function
-export async function respond(
+export async function generateResponse(
   message: string,
-  intent: string,
-  prompt: string,
-  conversation: Message[]
+  intent: Intent,
+  technique: PromptTechnique,
+  messages: Message[],
 ) {
-  const result = await cogniEngine.respond({
-    message,
-    intent: intent,
-    conversation,
-    technique: prompt,
-  });
+  const crisis = await crisisDetector.classify(message)
 
-  return {
-    reply: result.reply,
-    identifiedIntent: result.nextIntent,
-  };
+  if (CrisisDetector.requiresIntervention(crisis.risk)) {
+    return {
+      reply: CrisisDetector.getSafeResponse(crisis.category),
+      identifiedIntent: intent,
+    }
+  }
+
+  const result = await engine.respond({ message, intent, conversation: messages, technique })
+  return { reply: result.reply, identifiedIntent: result.nextIntent }
 }
 ```
 
@@ -379,28 +453,48 @@ export async function respond(
 ```typescript
 // Message structure
 interface Message {
-  id: string;
-  user: string;
-  text: string;
-  ts: number;
+  id: string
+  user: string
+  text: string
+  ts: number
 }
 
 // Intent type
-type Intent = "I1" | "I2" | "I3" | "I4" | "I5" | "I6" | "I7" | "I8";
+type Intent = 'I1' | 'I2' | 'I3' | 'I4' | 'I5' | 'I6' | 'I7' | 'I8'
 
 // Prompt technique
 type PromptTechnique =
-  | "default"
-  | "few-shot"
-  | "chain-of-thought"
-  | "persona"
-  | "plan-and-solve";
+  | 'default'
+  | 'few-shot'
+  | 'chain-of-thought'
+  | 'persona'
+  | 'plan-and-solve'
+  | 'pebbles'
 
 // Cognitive distortion result
 interface CognitiveDistortionClassification {
-  distortion: CognitiveDistortion;
-  confidence: number;
-  rationale: string;
+  distortion: CognitiveDistortion
+  confidence: number
+  rationale: string
+}
+
+// Crisis classification result
+interface CrisisClassification {
+  risk: 'LOW' | 'MED' | 'HIGH'
+  category: CrisisCategory
+  reasoning: string
+}
+
+// Session summary
+interface SessionSummary {
+  metadata: { totalTurns, startTime, endTime, durationMs, completedFullCycle, technique, finalIntent }
+  stages: SessionStageRecord[]
+  stageSummaries: Partial<Record<Intent, string>>
+  moodDelta: MoodDelta | null
+  distortionProfile: DistortionProfile[]
+  intentFunnel: IntentFunnel[]
+  mermaidChart: string
+  textSummary: string
 }
 ```
 
@@ -409,39 +503,10 @@ interface CognitiveDistortionClassification {
 ## Design Principles
 
 1. **Separation of Concerns**: Business logic (CBT) is isolated from UI and infrastructure
-2. **Dependency Injection**: LLM models are injected, making the engine testable and flexible
+2. **Dependency Injection**: A single LLM model is injected; services create their own structured output wrappers
 3. **Type Safety**: Comprehensive TypeScript types prevent runtime errors
-4. **Immutability**: Pure functions with no side effects where possible
-5. **Modularity**: Each component can be used independently
-
----
-
-## Testing
-
-```typescript
-// Mock LLM for testing
-const mockModel = {
-  invoke: jest.fn().mockResolvedValue({ text: "Mock response" })
-};
-
-const mockClassifier = {
-  invoke: jest.fn().mockResolvedValue({
-    distortion: "Overgeneralization",
-    confidence: 0.9,
-    rationale: "Test"
-  })
-};
-
-const engine = new CogniEngine({
-  mainModel: mockModel,
-  distortionClassifier: mockClassifier,
-  intentEvaluator: mockEvaluator,
-});
-
-// Run tests
-const result = await engine.respond(/* ... */);
-expect(result.reply).toBe("Mock response");
-```
+4. **Stateless Services**: Services don't hold conversation state — the caller manages it
+5. **Modularity**: Each service (distortion, crisis, intent, reply, session) can be used independently
 
 ---
 
@@ -449,7 +514,7 @@ expect(result.reply).toBe("Mock response");
 
 This module is part of the Mental Health Chatbot project. To contribute:
 
-1. Make changes in `src/cogni/`
+1. Make changes in `packages/cogni/src/`
 2. Ensure TypeScript types are correct: `pnpm build`
 3. Test with the main application
 4. Document API changes in this README
@@ -464,7 +529,8 @@ MIT License - See LICENSE file for details
 
 ## Version History
 
-- **1.0.0** (2026-01-27): Initial release with full CBT pipeline, 10 distortions, and 4 prompt techniques
+- **0.1.0** (2026-01-27): Initial release with full CBT pipeline, 10 distortions, and 4 prompt techniques
+- **0.2.0** (2026-02-16): Added CrisisDetector service, Pebbles prompt technique, session analytics (SessionTracker, SessionSummaryGenerator)
 
 ---
 

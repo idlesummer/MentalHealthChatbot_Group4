@@ -1,9 +1,9 @@
 'use server'
 import { ChatOpenAI } from '@langchain/openai'
-import { CogniEngine } from '@rainev/cogni'
-import type { Intent, PromptTechnique, Message } from '@rainev/cogni'
+import { CogniEngine, CrisisDetector } from '@rainev/cogni'
 import nodemailer from 'nodemailer'
 import { SessionExportPayload } from '@/lib/store/session-data'
+import type { Intent, PromptTechnique, Message, CrisisClassification } from '@rainev/cogni'
 
 // All functions that call APIs is will be defined here
 
@@ -19,8 +19,9 @@ const model = new ChatOpenAI({
   temperature: 0.2,
 })
 
-// Initialize the Cogni engine
+// Initialize the Cogni engine and crisis detector
 const engine = new CogniEngine(model)
+const crisisDetector = new CrisisDetector(model)
 
 export async function generateResponse(
   message: string,
@@ -28,7 +29,22 @@ export async function generateResponse(
   technique: PromptTechnique,
   messages: Message[],
 ) {
-  // Call the cogni engine with the user's message
+  // Step 0: Crisis detection gate — screen the message before CBT processing
+  const crisis = await crisisDetector.classify(message)
+
+  if (CrisisDetector.requiresIntervention(crisis.risk)) {
+    console.log('[CrisisDetector] Intervention triggered:', crisis)
+    const safeReply = CrisisDetector.getSafeResponse(crisis.category)
+
+    return {
+      reply: safeReply,
+      identifiedIntent: intent, // stay on the same intent
+      distortion: undefined,
+      crisis,
+    }
+  }
+
+  // Step 1+: Normal CBT pipeline
   const result = await engine.respond({
     message,
     intent,
@@ -46,6 +62,7 @@ export async function generateResponse(
     reply: result.reply,
     identifiedIntent: result.nextIntent,
     distortion: result.distortion,
+    crisis: { risk: 'LOW', category: 'none', reasoning: '' } as CrisisClassification,
   }
 }
 
