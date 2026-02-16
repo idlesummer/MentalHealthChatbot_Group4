@@ -1,4 +1,4 @@
-# Cogni API Guide
+# Cogni Architecture Guide
 
 A comprehensive guide to understanding how the Cogni CBT engine works, from the ground up.
 
@@ -6,9 +6,11 @@ A comprehensive guide to understanding how the Cogni CBT engine works, from the 
 - [Quick Start](#quick-start)
 - [Architecture Overview](#architecture-overview)
 - [The Engine: Where It All Begins](#the-engine-where-it-all-begins)
-- [The Flow: What Happens When You Call respond](#the-flow-what-happens-when-you-call-generateresponse)
+- [The Flow: What Happens When You Call respond](#the-flow-what-happens-when-you-call-respond)
 - [Services Layer](#services-layer)
 - [CBT Intent System](#cbt-intent-system)
+- [Crisis Detection](#crisis-detection)
+- [Session Analytics](#session-analytics)
 - [Prompt Techniques](#prompt-techniques)
 - [File Structure](#file-structure)
 - [Key Concepts](#key-concepts)
@@ -32,11 +34,11 @@ const result = await engine.respond({
   message: 'I failed my exam and feel terrible',
   intent: 'I1',
   conversation: [],
-  technique: 'few-shot'
+  technique: 'pebbles'
 })
 
-console.log(result.reply)           // AI's therapeutic response
-console.log(result.nextIntent)      // Next stage in CBT process
+console.log(result.reply)       // AI's therapeutic response
+console.log(result.nextIntent)  // Next stage in CBT process
 console.log(result.distortion)  // Detected distortion
 ```
 
@@ -51,19 +53,25 @@ Cogni uses a **service-oriented architecture** with a thin orchestrator pattern:
 │                  CogniEngine                    │
 │              (Thin Orchestrator)                │
 │                                                 │
-│  Coordinates 4 specialized services:            │
+│  Coordinates 3 specialized services:            │
 │  ┌───────────────────────────────────────────┐  │
-│  │ 1. PromptBuilder                          │  │
-│  │    → Builds prompts for LLM               │  │
-│  ├───────────────────────────────────────────┤  │
-│  │ 2. DistortionClassifier                   │  │
+│  │ 1. DistortionClassifier                   │  │
 │  │    → Identifies cognitive distortions     │  │
 │  ├───────────────────────────────────────────┤  │
-│  │ 3. ReplyParser                            │  │
-│  │    → Parses LLM responses to strings      │  │
+│  │ 2. ReplyGenerator                         │  │
+│  │    → Builds prompts & generates replies   │  │
 │  ├───────────────────────────────────────────┤  │
-│  │ 4. IntentManager                          │  │
+│  │ 3. IntentManager                          │  │
 │  │    → Manages intent transitions           │  │
+│  └───────────────────────────────────────────┘  │
+│                                                 │
+│  + Standalone services (used externally):       │
+│  ┌───────────────────────────────────────────┐  │
+│  │ 4. CrisisDetector                         │  │
+│  │    → Safety screening (LOW/MED/HIGH)      │  │
+│  ├───────────────────────────────────────────┤  │
+│  │ 5. SessionTracker / SessionSummaryGen.    │  │
+│  │    → Session analytics & summaries        │  │
 │  └───────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────┘
 ```
@@ -80,68 +88,47 @@ Cogni uses a **service-oriented architecture** with a thin orchestrator pattern:
 
 **Location:** `src/api/engine.ts`
 
-The `CogniEngine` is the main entry point. When you create an engine:
+The `CogniEngine` is the main entry point. It takes a single LangChain `BaseChatModel` and internally wires up all services:
 
 ```typescript
 constructor(model: BaseChatModel) {
   this.model = model
 
-  // Initialize services
-  const distortionClassifier = new DistortionClassifier(model)
-  const promptBuilder = new PromptBuilder()
-  const replyParser = new ReplyParser()
-  const intentManager = new IntentManager({ model, promptBuilder })
-
-  // Store services for later use
-  this.services = {
-    promptBuilder,
-    distortionClassifier,
-    replyParser,
-    intentManager,
-  }
+  // Initialize services — each creates its own structured output wrapper
+  this.distortionClassifier = new DistortionClassifier(model)
+  this.replyGenerator = new ReplyGenerator(model)
+  this.intentManager = new IntentManager({ model })
 }
 ```
 
 **What happens:**
 1. Takes your base LLM model
-2. Initializes four service objects
-3. Services handle their own structured outputs internally
-4. Stores everything for the main workflow
+2. Initializes three service objects
+3. Each service internally creates its own `model.withStructuredOutput()` wrappers as needed
+4. Stores services for the main `respond()` workflow
 
 ---
 
 ## The Flow: What Happens When You Call respond
 
-The `respond` method orchestrates the entire CBT pipeline in 4 steps:
+The `respond` method orchestrates the entire CBT pipeline in 3 steps:
 
 ```typescript
 async respond({ message, intent, conversation, technique }: CogniRequest) {
   // STEP 1: Classify cognitive distortion
-  const distortion = await this.services.distortionClassifier.classify(message)
+  const distortion = await this.distortionClassifier.classify(message)
 
-  // STEP 2: Build the prompt (PROMPT_REGISTRY imported in PromptBuilder)
-  const replyPrompt = this.services.promptBuilder.buildReplyPrompt(
-    message,
-    intent,
-    technique,
-    conversation,
-    distortion
+  // STEP 2: Generate therapeutic reply (prompt building is internal)
+  const { reply } = await this.replyGenerator.generate({
+    message, intent, technique, conversation, distortion
+  })
+
+  // STEP 3: Compute next intent via state machine
+  const nextIntent = await this.intentManager.computeNextIntent(
+    intent, message, conversation, technique
   )
 
-  // STEP 3: Generate response from LLM
-  const completion = await this.model.invoke(replyPrompt)
-  const reply = this.services.replyParser.parse(completion)
-
-  // STEP 4: Compute next intent
-  const newIntent = await this.services.intentManager.computeNextIntent(
-    intent,
-    message,
-    conversation,
-    technique
-  )
-  const nextIntent = newIntent || intent
-
-  return { reply, nextIntent, distortion }
+  return { reply, nextIntent: nextIntent || intent, distortion }
 }
 ```
 
@@ -153,44 +140,33 @@ User Message: "I failed my exam"
 ┌──────────────────────────────────────────┐
 │ STEP 1: Distortion Classification        │
 │                                          │
-│ DistortionClassifier.classify()            │
-│   → Uses structured output model         │
+│ DistortionClassifier.classify()          │
+│   → Uses structured output (zod schema)  │
 │   → Returns: {                           │
-│       distortion: "Catastrophizing",     │
+│       distortion: "catastrophizing",     │
 │       confidence: 0.85,                  │
 │       rationale: "..."                   │
 │     }                                    │
 └──────────────────────────────────────────┘
        ↓
 ┌──────────────────────────────────────────┐
-│ STEP 2: Prompt Building                  │
+│ STEP 2: Reply Generation                 │
 │                                          │
-│ PromptBuilder.buildReplyPrompt()         │
-│   → Accepts inline parameters:           │
-│     • message, intent, technique         │
-│     • conversation, distortion           │
-│   → Uses PROMPT_REGISTRY (imported)      │
-│   → Outputs full prompt string           │
+│ ReplyGenerator.generate()                │
+│   → Looks up prompt from PROMPT_REGISTRY │
+│     for the given technique + intent     │
+│   → Builds system/user messages          │
+│   → Calls model with structured output   │
+│   → Returns { reply: string }            │
 └──────────────────────────────────────────┘
        ↓
 ┌──────────────────────────────────────────┐
-│ STEP 3: LLM Response Generation          │
-│                                          │
-│ model.invoke(fullPrompt)                 │
-│   → Sends prompt to LLM                  │
-│   → Gets back response                   │
-│                                          │
-│ ReplyParser.parse()           │
-│   → Extracts text from response object   │
-│   → Handles different response formats   │
-└──────────────────────────────────────────┘
-       ↓
-┌──────────────────────────────────────────┐
-│ STEP 4: Intent Transition Evaluation     │
+│ STEP 3: Intent Transition Evaluation     │
 │                                          │
 │ IntentManager.computeNextIntent()        │
-│   → Checks if current intent is complete │
-│   → Uses state machine logic             │
+│   → Checks completion rule from          │
+│     INTENT_COMPLETION_REGISTRY           │
+│   → Uses state machine to evaluate       │
 │   → Returns next intent or stays current │
 │   → Example: I1 → I2 (if complete)       │
 └──────────────────────────────────────────┘
@@ -208,57 +184,9 @@ User Message: "I failed my exam"
 
 Located in `src/services/`, each service handles one responsibility.
 
-### 1. PromptBuilder (`prompt-builder.ts`)
+### 1. DistortionClassifier (`distortion-classifier.ts`)
 
-**Purpose:** Centralizes all prompt construction logic
-
-**Key Methods:**
-
-```typescript
-buildReplyPrompt(
-  message: string,
-  intent: Intent,
-  technique: PromptTechnique,
-  conversation: Message[],
-  distortion: CognitiveDistortionClassification
-) {
-  // Builds the main prompt for generating therapeutic responses
-  // Includes: conversation history, intent guidelines, distortion info
-  // Uses PROMPT_REGISTRY imported directly from @/prompts
-}
-
-buildIntentEvaluationPrompt(
-  state: Intent,
-  input: string,
-  context: Message[],
-  intentConfig: IntentPromptConfig,
-  completionRule: string
-) {
-  // Builds prompts for evaluating if intent is complete
-  // Includes: conversation history, completion rules
-}
-```
-
-**Example Output:**
-```
-You are a CBT-based assistant helping the user manage their thoughts and emotions.
-Use this conversation history to inform your response:
-user: I failed my exam
-
-Use the following guidelines for this stage:
-[Intent-specific system prompt from technique]
-
-Identified Cognitive Distortion: Catastrophizing.
-
-User Message:
-'I failed my exam'
-
-Please respond in a way that aligns with the user's CBT stage and identified distortion.
-```
-
-### 2. DistortionClassifier (`distortion-classifier.ts`)
-
-**Purpose:** Classifies cognitive distortions in user messages
+**Purpose:** Classifies cognitive distortions in user messages using structured output.
 
 **How it works:**
 ```typescript
@@ -268,8 +196,10 @@ constructor(model: BaseChatModel) {
 }
 
 async classify(message: string): Promise<CognitiveDistortionClassification> {
-  // Builds prompt with all distortion options and classifies the message
-  return this.classifier.invoke([...])
+  return this.classifier.invoke([
+    { role: 'system', content: DISTORTION_SYSTEM_PROMPT },
+    { role: 'user', content: message },
+  ])
 }
 ```
 
@@ -288,50 +218,44 @@ async classify(message: string): Promise<CognitiveDistortionClassification> {
 **Returns:**
 ```typescript
 {
-  distortion: "Catastrophizing",
+  distortion: "catastrophizing",
   confidence: 0.85,
   rationale: "The user is treating the exam failure as..."
 }
 ```
 
-### 3. ReplyParser (`reply-parser.ts`)
+### 2. ReplyGenerator (`reply-generator.ts`)
 
-**Purpose:** Safely extracts text from LLM responses
+**Purpose:** Generates therapeutic replies using the selected prompt technique.
 
-**Why needed:** Different LLM providers return responses in different formats:
-- Some return strings directly
-- Some return `{ text: "..." }`
-- Some return `{ content: "..." }`
-
+**How it works:**
 ```typescript
-parse(response: unknown): string {
-  if (typeof response === 'string') return response
+constructor(model: BaseChatModel) {
+  this.generator = model.withStructuredOutput(replySchema)
+}
 
-  if (typeof response === 'object' && response !== null) {
-    if ('text' in response) return response.text
-    if ('content' in response) return response.content
-  }
-
-  return String(response)
+async generate({ message, intent, technique, conversation, distortion }) {
+  // 1. Look up prompt config from PROMPT_REGISTRY[technique][intent]
+  // 2. Build system prompt with role, guidelines, distortion info
+  // 3. Include conversation history
+  // 4. Call structured output model
+  // 5. Return { reply: string }
 }
 ```
 
-### 4. IntentManager (`intent-manager.ts`)
+The `PROMPT_REGISTRY` maps each `(technique, intent)` pair to a `{ role, system }` configuration that tells the LLM how to respond at each CBT stage.
 
-**Purpose:** Manages the 8-stage CBT intent progression
+### 3. IntentManager (`intent-manager/manager.ts`)
 
-**Key Responsibility:** Decides when to move from one intent to the next
+**Purpose:** Manages the 8-stage CBT intent progression using a finite state machine.
 
 **Uses a State Machine:**
 ```typescript
 constructor(config: IntentManagerConfig) {
-  // config contains: { model, promptBuilder }
-  // PROMPT_REGISTRY is imported directly from @/prompts
-
   this.stateMachine = new StateMachine({
     initialState: 'I1',
-    routes: INTENT_ROUTE_REGISTRY,           // I1→I2→I3→...→I8→I1
-    stateMeta: INTENT_COMPLETION_REGISTRY,   // Rules for each intent
+    routes: INTENT_ROUTE_REGISTRY,         // I1→I2→I3→...→I8→I1
+    stateMeta: INTENT_COMPLETION_REGISTRY,  // Completion rules per intent
     shouldAdvance: (decision) =>
       decision.moveToNextIntent && decision.confidence > 0.5,
     evaluator: async (...) => this.evaluateTransition(...)
@@ -342,18 +266,57 @@ constructor(config: IntentManagerConfig) {
 **Main Method:**
 ```typescript
 async computeNextIntent(
-  intent: string,
+  intent: Intent,
   message: string,
   conversation: Message[],
   technique?: PromptTechnique
-): Promise<string | null> {
+): Promise<Intent | null> {
   const { nextState } = await this.stateMachine.step(
-    intent,
-    message,
-    conversation
+    intent, message, conversation
   )
   return nextState
 }
+```
+
+### 4. CrisisDetector (`crisis-detector.ts`)
+
+**Purpose:** Safety screening that runs *before* the CBT pipeline to catch crisis-level messages.
+
+**Used externally** (not wired into CogniEngine — the caller decides the flow):
+
+```typescript
+const detector = new CrisisDetector(model)
+const crisis = await detector.classify(message)
+
+if (CrisisDetector.requiresIntervention(crisis.risk)) {
+  return CrisisDetector.getSafeResponse(crisis.category)
+}
+// else proceed to engine.respond(...)
+```
+
+**Risk levels:** `LOW`, `MED`, `HIGH`
+
+**Categories:** `none`, `suicidal_ideation`, `self_harm`, `harm_to_others`, `abuse_or_violence`, `severe_distress`
+
+Each category has a pre-written safe template with crisis hotline information (988 Lifeline, Crisis Text Line, RAINN, etc.).
+
+### 5. Session Analytics (`session-summary/`)
+
+**SessionTracker** — collects turn-by-turn data during a session:
+```typescript
+tracker.record({ intent, userMessage, assistantReply, nextIntent, distortion })
+```
+
+**SessionSummaryGenerator** — pure computation (no LLM) that produces:
+- Mood delta (pre/post scores from I3 and I7)
+- Distortion frequency profile with average confidence
+- Intent funnel (turns per stage, completed status)
+- Mermaid flowchart of the session
+- Clinician-facing text summary
+
+```typescript
+const generator = new SessionSummaryGenerator()
+const summary = generator.generate(records, technique)
 ```
 
 ---
@@ -386,7 +349,7 @@ Back to I1 (new cycle)
 
 ### Intent Routes
 
-**Defined in:** `src/services/intents.ts`
+**Defined in:** `src/services/intent-manager/intents.ts`
 
 ```typescript
 export const INTENT_ROUTE_REGISTRY = {
@@ -429,53 +392,105 @@ User: "I failed my calculus final yesterday. I studied for weeks but still got a
 
 ---
 
+## Crisis Detection
+
+The `CrisisDetector` is a standalone service that screens user messages *before* they enter the CBT pipeline.
+
+### Flow
+
+```
+User message
+    ↓
+┌──────────────────────────┐
+│ CrisisDetector.classify()│
+│ → risk: LOW/MED/HIGH     │
+│ → category               │
+└──────────────────────────┘
+    ↓
+  risk == MED or HIGH?
+    ├── YES → Serve safe template with crisis hotlines
+    └── NO  → Proceed to CogniEngine.respond()
+```
+
+### Safe Response Templates
+
+Each crisis category maps to a compassionate response with specific resources:
+
+| Category | Resources Included |
+|----------|-------------------|
+| `suicidal_ideation` | 988 Lifeline, Crisis Text Line, IASP |
+| `self_harm` | 988 Lifeline, Crisis Text Line |
+| `harm_to_others` | 988 Lifeline, 911 |
+| `abuse_or_violence` | National DV Hotline, RAINN, Childhelp |
+| `severe_distress` | 988 Lifeline, Crisis Text Line |
+
+---
+
+## Session Analytics
+
+The session analytics system has two components:
+
+### SessionTracker (data collection)
+
+Records each turn with: intent, user message, assistant reply, detected distortion, next intent, timestamp.
+
+### SessionSummaryGenerator (computation)
+
+Takes the recorded session data and produces a `SessionSummary` containing:
+
+- **Metadata**: total turns, duration, technique, whether a full cycle was completed
+- **Mood Delta**: extracts numeric scores from I3 (initial mood) and I7 (re-rating) to compute improvement
+- **Distortion Profile**: aggregates detected distortions with frequency counts and average confidence
+- **Intent Funnel**: shows how many turns each stage took and which stages were completed
+- **Mermaid Flowchart**: a visual representation of the session flow
+- **Text Summary**: a clinician-facing narrative summary
+
+This is **pure computation** — no LLM calls needed. It can be run client-side for instant updates.
+
+---
+
 ## Prompt Techniques
 
-The engine supports 5 different prompting techniques for generating responses.
+The engine supports 6 different prompting techniques for generating responses.
 
 **Defined in:** `src/prompts/`
 
-### 1. Default (`null`)
-Simple, straightforward CBT guidance without special formatting.
+### 1. Default (`default`)
+Simple, straightforward CBT guidance without special formatting. Uses `null` in the prompt registry (falls back to generic prompts).
 
-### 2. Few-Shot (`few-shot`)
-Includes example conversations to guide the LLM's response style.
+### 2. Persona (`persona`)
+Uses a detailed persona with specific role, objectives, and boundaries for each intent stage.
+
+### 3. Few-Shot (`few-shot`)
+Includes example conversations (6-7 per stage) to guide the LLM's response style.
 
 **Structure:**
 ```typescript
 {
   I1: {
     role: "Situation Identifier",
-    system: "Your role is to help identify the situation...",
-    examples: [
-      {
-        user: "I had a fight with my friend",
-        assistant: "Can you tell me more about when this happened?"
-      },
-      // ... more examples
-    ]
+    system: "Your role is to help identify the situation...\n\nExamples:\n..."
   },
-  I2: { ... },
   // ... for each intent
 }
 ```
 
-### 3. Chain-of-Thought (`chain-of-thought`)
-Encourages the LLM to show its reasoning process.
-
-### 4. Persona (`persona`)
-Uses a detailed persona with specific role, objectives, and boundaries.
+### 4. Chain-of-Thought (`chain-of-thought`)
+Encourages the LLM to show its reasoning process step by step.
 
 ### 5. Plan-and-Solve (`plan-and-solve`)
-Breaks down the therapeutic approach into planning and execution steps.
+Breaks down the therapeutic approach into planning and execution phases.
+
+### 6. Pebbles (`pebbles`)
+A hybrid technique combining elements of persona, chain-of-thought, and few-shot. This is the default technique used by the Pebbles web app.
 
 ### How Techniques Are Used
 
 ```typescript
-// In PromptBuilder.buildReplyPrompt()
+// In ReplyGenerator
 const techniquePrompts = PROMPT_REGISTRY[technique]  // Get technique-specific prompts
 const intentConfig = techniquePrompts?.[intent] ?? {
-  role: 'Default CBT-base assistant',
+  role: 'Default CBT-based assistant',
   system: 'Use general CBT-based guidance to assist the user.',
 }
 
@@ -490,40 +505,54 @@ const intentConfig = techniquePrompts?.[intent] ?? {
 
 ```
 src/
-├── api/                       # Main API layer
-│   ├── index.ts              # Re-exports (no types)
-│   └── engine.ts             # CogniEngine implementation
+├── api/                              # Main API layer
+│   ├── index.ts                     # Re-exports
+│   └── engine.ts                    # CogniEngine implementation
 │
-├── services/                 # Service layer (business logic)
-│   ├── index.ts              # Barrel export
-│   ├── prompt-builder.ts     # Builds prompts for LLM
-│   ├── distortion-classifier.ts  # Detects cognitive distortions
-│   ├── reply-parser.ts       # Parses LLM responses
-│   ├── intent-manager.ts     # Manages intent transitions
-│   └── intents.ts            # Intent routes and completion rules
+├── services/                        # Service layer (business logic)
+│   ├── index.ts                     # Barrel export
+│   ├── types.ts                     # Message interface
+│   ├── distortion-classifier.ts     # Detects cognitive distortions
+│   ├── crisis-detector.ts           # Crisis risk screening
+│   ├── reply-generator.ts           # Generates therapeutic replies
+│   ├── intent-manager/              # Manages intent transitions
+│   │   ├── manager.ts               # IntentManager class
+│   │   ├── intents.ts               # Routes and completion rules
+│   │   └── index.ts
+│   └── session-summary/             # Session analytics
+│       ├── tracker.ts               # SessionTracker class
+│       ├── generator.ts             # SessionSummaryGenerator class
+│       ├── types.ts                 # Summary type definitions
+│       └── index.ts
 │
-├── prompts/                  # Prompt engineering techniques
-│   ├── index.ts              # Exports PROMPT_REGISTRY
-│   ├── registry.ts           # Main registry of all techniques
-│   ├── types.ts              # Prompt type definitions
-│   ├── persona.ts            # Persona-based prompts
-│   └── ...                   # Other technique implementations
+├── prompts/                         # Prompt engineering techniques
+│   ├── index.ts                     # Exports PROMPT_REGISTRY
+│   ├── registry.ts                  # Registry mapping techniques to intent configs
+│   ├── types.ts                     # PromptTechnique, IntentPromptConfig types
+│   ├── persona.ts                   # Persona-based prompts
+│   ├── few-shot.ts                  # Few-shot learning prompts
+│   ├── chain-of-thought.ts          # Chain-of-thought prompts
+│   ├── plan-and-solve.ts            # Plan-and-solve prompts
+│   └── pebbles.ts                   # Pebbles hybrid prompts
 │
-├── utils/                    # Utility functions
-│   └── state-machine.ts      # Generic state machine
+├── utils/                           # Utility functions
+│   └── state-machine.ts             # Generic finite state machine
 │
-└── index.ts                  # Main entry point (wildcard exports)
+└── index.ts                         # Main entry point (wildcard exports)
 ```
 
 ### Key Files
 
 | File | Purpose |
 |------|---------|
-| `api/engine.ts` | The orchestrator - coordinates everything |
-| `services/intent-manager.ts` | State machine for intent progression |
-| `services/prompt-builder.ts` | Centralizes all prompt construction |
-| `services/intents.ts` | Intent routes and completion criteria |
+| `api/engine.ts` | The orchestrator — coordinates all services |
 | `services/distortion-classifier.ts` | Cognitive distortion detection |
+| `services/crisis-detector.ts` | Crisis risk screening with safe templates |
+| `services/reply-generator.ts` | Prompt construction and reply generation |
+| `services/intent-manager/manager.ts` | State machine for intent progression |
+| `services/intent-manager/intents.ts` | Intent routes and completion criteria |
+| `services/session-summary/generator.ts` | Session analytics computation |
+| `services/session-summary/tracker.ts` | Session data collection |
 | `prompts/registry.ts` | All prompt techniques registry |
 | `prompts/types.ts` | Prompt type definitions |
 | `utils/state-machine.ts` | Generic state machine implementation |
@@ -539,7 +568,7 @@ The engine uses **structured outputs** to get predictable JSON from the LLM:
 ```typescript
 // Define schema with zod
 const schema = z.object({
-  distortion: z.enum(['Catastrophizing', 'Overgeneralization', ...]),
+  distortion: z.enum(['catastrophizing', 'overgeneralization', ...]),
   confidence: z.number().min(0).max(1),
   rationale: z.string()
 })
@@ -548,8 +577,8 @@ const schema = z.object({
 const structuredModel = model.withStructuredOutput(schema)
 
 // Now LLM always returns valid JSON matching the schema
-const result = await structuredModel.invoke("I failed my exam")
-// result = { distortion: "Catastrophizing", confidence: 0.85, rationale: "..." }
+const result = await structuredModel.invoke([...])
+// result = { distortion: "catastrophizing", confidence: 0.85, rationale: "..." }
 ```
 
 ### 2. State Machine
@@ -560,9 +589,9 @@ Intent transitions use a state machine pattern:
 StateMachine({
   initialState: 'I1',
   routes: { I1: 'I2', I2: 'I3', ... },       // Where to go next
-  stateMeta: { I1: 'rule...', ... },         // Completion criteria
-  shouldAdvance: (decision) => ...,          // Decision function
-  evaluator: async (...) => ...              // Evaluation logic
+  stateMeta: { I1: 'rule...', ... },          // Completion criteria
+  shouldAdvance: (decision) => ...,           // Decision function
+  evaluator: async (...) => ...               // Evaluation logic
 })
 ```
 
@@ -574,25 +603,27 @@ StateMachine({
 ### 3. Service Pattern
 
 Each service is:
-- **Single responsibility** - does one thing well
-- **Injected** - dependencies passed to constructor
-- **Testable** - can mock dependencies
-- **Swappable** - easy to replace implementations
+- **Single responsibility** — does one thing well
+- **Injected** — dependencies (model) passed to constructor
+- **Testable** — can mock the model
+- **Swappable** — easy to replace implementations
 
 Example:
 ```typescript
 // Service with dependency injection
 class DistortionClassifier {
-  constructor(private classifier: Runnable) {}
+  constructor(model: BaseChatModel) {
+    this.classifier = model.withStructuredOutput(schema)
+  }
 
-  async detect(message: string) {
-    return this.classifier.invoke(message)
+  async classify(message: string) {
+    return this.classifier.invoke([...])
   }
 }
 
 // Easy to test with mocks
-const mockClassifier = { invoke: () => mockResult }
-const detector = new DistortionClassifier(mockClassifier)
+const mockModel = { withStructuredOutput: () => ({ invoke: () => mockResult }) }
+const detector = new DistortionClassifier(mockModel)
 ```
 
 ### 4. Prompt Techniques
@@ -606,6 +637,7 @@ Different techniques optimize LLM responses:
 | **chain-of-thought** | Complex reasoning required |
 | **persona** | Need specific therapeutic voice |
 | **plan-and-solve** | Multi-step problem solving |
+| **pebbles** | Production use (hybrid of best approaches) |
 
 ### 5. Type Safety
 
@@ -614,7 +646,7 @@ The codebase uses TypeScript extensively:
 ```typescript
 // Everything is typed
 type Intent = 'I1' | 'I2' | 'I3' | 'I4' | 'I5' | 'I6' | 'I7' | 'I8'
-type PromptTechnique = 'default' | 'few-shot' | 'chain-of-thought' | 'persona' | 'plan-and-solve'
+type PromptTechnique = 'default' | 'few-shot' | 'chain-of-thought' | 'persona' | 'plan-and-solve' | 'pebbles'
 
 interface CogniRequest {
   message: string
@@ -626,7 +658,7 @@ interface CogniRequest {
 // Catches errors at compile time
 engine.respond({
   message: "Hello",
-  intent: "I9",  // ❌ Type error: "I9" is not valid
+  intent: "I9",  // Type error: "I9" is not valid
   // ...
 })
 ```
@@ -644,40 +676,35 @@ const result = await engine.respond({
   message: "I failed my calculus final yesterday. I studied for weeks but got a D.",
   intent: "I1",
   conversation: [],
-  technique: "few-shot"
+  technique: "pebbles"
 })
 ```
 
 **Step-by-step:**
 
 1. **DistortionClassifier** analyzes the message
-   - Detects: "Overgeneralization" (implies total failure from one exam)
+   - Detects: "overgeneralization" (implies total failure from one exam)
    - Returns structured JSON with confidence and rationale
 
-2. **PromptBuilder** creates a prompt
-   - Loads few-shot technique prompts for I1
+2. **ReplyGenerator** constructs prompt and generates response
+   - Loads pebbles technique prompts for I1
+   - Builds system prompt with role, intent guidelines, and distortion context
    - Includes conversation history (empty in this case)
-   - Adds detected distortion info
-   - Adds intent-specific guidelines from few-shot prompts
+   - Calls model with structured output to get the reply
 
-3. **LLM generates response**
-   - Uses the constructed prompt
-   - Generates therapeutic response aligned with I1 (situation identification)
-   - Asks clarifying questions to fully understand the situation
-
-4. **IntentManager evaluates transition**
+3. **IntentManager evaluates transition**
    - Checks completion rule for I1: needs clear situation + context
    - User message has: what (failed exam), when (yesterday), context (studied for weeks)
-   - Decision: ✅ Complete, advance to I2
-   - Uses state machine to transition: I1 → I2
+   - Decision: Complete, advance to I2
+   - Uses state machine to transition: I1 -> I2
 
-5. **Return result**
+4. **Return result**
    ```typescript
    {
      reply: "I hear that you failed your calculus final...",
      nextIntent: "I2",
      distortion: {
-       distortion: "Overgeneralization",
+       distortion: "overgeneralization",
        confidence: 0.78,
        rationale: "..."
      }
@@ -699,9 +726,13 @@ const result = await engine.respond({
 
 ## Common Questions
 
-### Q: Why separate PromptBuilder from IntentManager?
+### Q: Why use a single model instead of separate models per service?
 
-**A:** Separation of concerns. PromptBuilder handles string formatting, IntentManager handles state transitions. They can be tested and modified independently.
+**A:** Simplicity. Each service internally calls `model.withStructuredOutput(schema)` to create its own specialized wrapper. The caller only provides one model.
+
+### Q: Why is CrisisDetector separate from CogniEngine?
+
+**A:** The crisis gate runs *before* the CBT pipeline and may short-circuit it entirely. Keeping it separate lets the caller decide the control flow (e.g., a server action can return a safe response without touching the engine).
 
 ### Q: Why use a state machine for intents?
 
@@ -713,11 +744,15 @@ const result = await engine.respond({
 
 ### Q: What if I want to customize completion rules?
 
-**A:** Edit `src/services/intents.ts` and modify `INTENT_COMPLETION_REGISTRY`. The IntentManager will automatically use your new rules.
+**A:** Edit `src/services/intent-manager/intents.ts` and modify `INTENT_COMPLETION_REGISTRY`. The IntentManager will automatically use your new rules.
 
 ### Q: How do I add a new cognitive distortion?
 
 **A:** Add it to `COGNITIVE_DISTORTIONS` and `COGNITIVE_DISTORTION_KEYS` in `services/distortion-classifier.ts`, then update the zod schema used for structured outputs.
+
+### Q: How do I add a new crisis category?
+
+**A:** Add the category to the `CrisisCategory` type and zod schema in `services/crisis-detector.ts`, update the system prompt, and add a safe response template to `CRISIS_SAFE_RESPONSES`.
 
 ---
 
@@ -726,7 +761,7 @@ const result = await engine.respond({
 1. **Read the examples** in `examples/` to see practical usage
 2. **Check `README-INTENT-EVALUATION-BUG.md`** for known issues
 3. **Experiment with different prompt techniques** to see their effects
-4. **Try modifying completion rules** in `services/intents.ts`
+4. **Try modifying completion rules** in `services/intent-manager/intents.ts`
 5. **Look at the service implementations** to understand internals
 
 ---
@@ -735,14 +770,15 @@ const result = await engine.respond({
 
 **Core Flow:**
 ```
-User Message → Distortion Detection → Prompt Building → LLM Generation → Intent Evaluation → Result
+User Message → Crisis Detection → Distortion Detection → Reply Generation → Intent Evaluation → Result
 ```
 
 **Key Components:**
-- **CogniEngine**: Thin orchestrator
-- **4 Services**: PromptBuilder, DistortionClassifier, ReplyParser, IntentManager
-- **8 Intents**: I1 → I2 → I3 → I4 → I5 → I6 → I7 → I8 → I1
-- **5 Techniques**: default, few-shot, chain-of-thought, persona, plan-and-solve
+- **CogniEngine**: Thin orchestrator coordinating 3 internal services
+- **3 Internal Services**: DistortionClassifier, ReplyGenerator, IntentManager
+- **2 Standalone Services**: CrisisDetector, SessionTracker/SessionSummaryGenerator
+- **8 Intents**: I1 -> I2 -> I3 -> I4 -> I5 -> I6 -> I7 -> I8 -> I1
+- **6 Techniques**: default, few-shot, chain-of-thought, persona, plan-and-solve, pebbles
 
 **Architecture Pattern:**
 - Service-oriented with dependency injection
@@ -753,5 +789,5 @@ User Message → Distortion Detection → Prompt Building → LLM Generation →
 This architecture makes the codebase:
 - Easy to understand (clear responsibilities)
 - Easy to test (isolated services)
-- Easy to extend (add techniques, intents, distortions)
+- Easy to extend (add techniques, intents, distortions, crisis categories)
 - Easy to maintain (low coupling)
