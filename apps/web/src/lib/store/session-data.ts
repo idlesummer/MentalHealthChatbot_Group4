@@ -18,6 +18,12 @@ type SessionDataState = {
   clearSession: () => void
 }
 
+export type SessionExportPayload = {
+  exportedBy: string
+  exportedAt: string
+  records: SessionStageRecord[]
+}
+
 export const useSessionDataStore = create<SessionDataState>()(
   persist(
     (set, get) => ({

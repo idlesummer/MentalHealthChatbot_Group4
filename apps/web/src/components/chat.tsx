@@ -20,6 +20,8 @@ import {
 
 import { usePromptStateStore } from '@/lib/blueprints/promptStore'
 
+import { SendSessionButton } from './elements/send-data-button'
+
 export function Chat({ children }: PropsWithChildren) {
   return (
     <div className="flex flex-col mx-auto h-full max-w-5xl bg-background shadow-sm rounded-2xl">
@@ -63,6 +65,9 @@ export function ChatHeader() {
         </SelectContent>
       </Select>
 
+
+      <SendSessionButton/>
+      
       <Button
         variant="secondary"
         size="icon"
