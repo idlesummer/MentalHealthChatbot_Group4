@@ -1,10 +1,9 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { MermaidChart } from '@/components/mermaid-chart'
 import { cn } from '@/lib/utils'
-import type { SessionSummary, Intent } from '@rainev/cogni'
+import type { SessionSummary, Intent, MoodDelta as MoodDeltaType, DistortionProfile as DistortionProfileType } from '@rainev/cogni'
 
 const INTENT_LABELS: Record<Intent, string> = {
   I1: 'Situation',
@@ -26,51 +25,43 @@ const INTENT_ORDER: Intent[] = ['I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'I8']
 export function SessionSummaryPanel({ summary }: { summary: SessionSummary }) {
   return (
     <div className="space-y-4">
-      <MetadataBar summary={summary} />
+      <SessionStatusBar
+        totalTurns={summary.metadata.totalTurns}
+        completedFullCycle={summary.metadata.completedFullCycle}
+        finalIntent={summary.metadata.finalIntent}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <MoodDeltaCard summary={summary} />
-        <DistortionProfileCard summary={summary} />
+        <MoodDeltaCard moodDelta={summary.moodDelta} />
+        <DistortionProfileCard distortionProfile={summary.distortionProfile} />
       </div>
-      <FlowchartCard summary={summary} />
-      <IntentFunnelCard summary={summary} />
-      <StageSummariesCard summary={summary} />
-      <ClinicalSummaryCard summary={summary} />
+      <FlowchartCard mermaidChart={summary.mermaidChart} />
+      <StageSummariesCard stageSummaries={summary.stageSummaries} />
     </div>
   )
 }
 
 // =============================================================================
-// Metadata Bar
+// Session Status (slim top bar)
 // =============================================================================
 
-function MetadataBar({ summary }: { summary: SessionSummary }) {
-  const { metadata } = summary
-  const durationSec = (metadata.durationMs / 1000).toFixed(0)
-
+function SessionStatusBar({
+  totalTurns,
+  completedFullCycle,
+  finalIntent,
+}: {
+  totalTurns: number
+  completedFullCycle: boolean
+  finalIntent: Intent
+}) {
   return (
-    <Card className="py-3">
-      <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-        <Stat label="Turns" value={String(metadata.totalTurns)} />
-        <Separator orientation="vertical" className="h-4" />
-        <Stat label="Duration" value={`${durationSec}s`} />
-        <Separator orientation="vertical" className="h-4" />
-        <Stat label="Technique" value={metadata.technique} />
-        <Separator orientation="vertical" className="h-4" />
-        <Stat
-          label="Full Cycle"
-          value={metadata.completedFullCycle ? 'Yes' : 'No'}
-          className={metadata.completedFullCycle ? 'text-green-600' : 'text-amber-600'}
-        />
-      </CardContent>
-    </Card>
-  )
-}
-
-function Stat({ label, value, className }: { label: string; value: string; className?: string }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-muted-foreground">{label}:</span>
-      <span className={cn('font-semibold', className)}>{value}</span>
+    <div className="flex items-center gap-3 text-xs text-muted-foreground px-1">
+      <span>{totalTurns} turn{totalTurns !== 1 ? 's' : ''}</span>
+      <span>&middot;</span>
+      <span>Current: <strong className="text-foreground">{INTENT_LABELS[finalIntent]}</strong></span>
+      <span>&middot;</span>
+      <span className={completedFullCycle ? 'text-green-600 font-medium' : ''}>
+        {completedFullCycle ? 'Full cycle complete' : 'In progress'}
+      </span>
     </div>
   )
 }
@@ -79,8 +70,7 @@ function Stat({ label, value, className }: { label: string; value: string; class
 // Mood Delta
 // =============================================================================
 
-function MoodDeltaCard({ summary }: { summary: SessionSummary }) {
-  const { moodDelta } = summary
+function MoodDeltaCard({ moodDelta }: { moodDelta: MoodDeltaType | null }) {
   if (!moodDelta) {
     return (
       <Card>
@@ -100,13 +90,11 @@ function MoodDeltaCard({ summary }: { summary: SessionSummary }) {
       <CardContent className="space-y-4">
         {hasScores ? (
           <>
-            {/* Bars */}
             <div className="space-y-2">
               <MoodBar label="Before (I3)" score={preScore} color="bg-amber-400" />
               <MoodBar label="After (I7)" score={postScore} color={improved ? 'bg-green-500' : 'bg-red-400'} />
             </div>
 
-            {/* Delta badge */}
             <div className="flex items-center gap-2">
               <span className={cn(
                 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold',
@@ -156,9 +144,7 @@ function MoodBar({ label, score, color }: { label: string; score: number; color:
 // Distortion Profile
 // =============================================================================
 
-function DistortionProfileCard({ summary }: { summary: SessionSummary }) {
-  const { distortionProfile } = summary
-
+function DistortionProfileCard({ distortionProfile }: { distortionProfile: DistortionProfileType[] }) {
   if (distortionProfile.length === 0) {
     return (
       <Card>
@@ -199,52 +185,12 @@ function DistortionProfileCard({ summary }: { summary: SessionSummary }) {
 // Flowchart (Mermaid)
 // =============================================================================
 
-function FlowchartCard({ summary }: { summary: SessionSummary }) {
+function FlowchartCard({ mermaidChart }: { mermaidChart: string }) {
   return (
     <Card>
       <CardHeader><CardTitle className="text-sm">CBT Session Flowchart</CardTitle></CardHeader>
       <CardContent>
-        <MermaidChart chart={summary.mermaidChart} />
-      </CardContent>
-    </Card>
-  )
-}
-
-// =============================================================================
-// Intent Funnel
-// =============================================================================
-
-function IntentFunnelCard({ summary }: { summary: SessionSummary }) {
-  return (
-    <Card>
-      <CardHeader><CardTitle className="text-sm">Intent Funnel</CardTitle></CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-1">
-          {summary.intentFunnel.map((step, i) => (
-            <div key={step.intent} className="flex items-center gap-1">
-              <div
-                className={cn(
-                  'flex flex-col items-center justify-center rounded-lg border px-3 py-2 text-center transition-colors',
-                  step.completed
-                    ? 'border-green-300 bg-green-50 text-green-800'
-                    : 'border-dashed border-gray-300 bg-gray-50 text-gray-400',
-                )}
-              >
-                <span className="text-[10px] font-bold">{step.intent}</span>
-                <span className="text-[9px] leading-tight">{step.label}</span>
-                {step.turns > 0 && (
-                  <span className="mt-0.5 text-[9px] text-muted-foreground">{step.turns}t</span>
-                )}
-              </div>
-              {i < summary.intentFunnel.length - 1 && (
-                <span className={cn(
-                  'text-xs',
-                  step.completed ? 'text-green-400' : 'text-gray-300',
-                )}>{'\u2192'}</span>
-              )}
-            </div>
-          ))}
-        </div>
+        <MermaidChart chart={mermaidChart} />
       </CardContent>
     </Card>
   )
@@ -254,8 +200,7 @@ function IntentFunnelCard({ summary }: { summary: SessionSummary }) {
 // Stage Summaries (LLM-generated clinical notes)
 // =============================================================================
 
-function StageSummariesCard({ summary }: { summary: SessionSummary }) {
-  const { stageSummaries } = summary
+function StageSummariesCard({ stageSummaries }: { stageSummaries: Partial<Record<Intent, string>> }) {
   const entries = INTENT_ORDER
     .filter(intent => stageSummaries[intent])
     .map(intent => ({ intent, label: INTENT_LABELS[intent], text: stageSummaries[intent]! }))
@@ -291,23 +236,6 @@ function StageSummariesCard({ summary }: { summary: SessionSummary }) {
             </div>
           </div>
         ))}
-      </CardContent>
-    </Card>
-  )
-}
-
-// =============================================================================
-// Clinical Text Summary (plain-text fallback)
-// =============================================================================
-
-function ClinicalSummaryCard({ summary }: { summary: SessionSummary }) {
-  return (
-    <Card>
-      <CardHeader><CardTitle className="text-sm">Raw Clinician Summary</CardTitle></CardHeader>
-      <CardContent>
-        <pre className="whitespace-pre-wrap text-xs leading-relaxed font-mono bg-muted rounded-lg p-4">
-          {summary.textSummary}
-        </pre>
       </CardContent>
     </Card>
   )

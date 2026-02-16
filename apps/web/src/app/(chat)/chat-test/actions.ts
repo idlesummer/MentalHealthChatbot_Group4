@@ -2,8 +2,8 @@
 
 import { z } from 'zod'
 import { ChatOpenAI } from '@langchain/openai'
-import { CogniEngine, SessionSummaryGenerator, INTENT_LABELS } from '@rainev/cogni'
-import type { Intent, PromptTechnique, Message, SessionStageRecord, StageSummaries } from '@rainev/cogni'
+import { CogniEngine, CrisisDetector, SessionSummaryGenerator, INTENT_LABELS } from '@rainev/cogni'
+import type { Intent, PromptTechnique, Message, SessionStageRecord, StageSummaries, CrisisClassification } from '@rainev/cogni'
 
 const model = new ChatOpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -12,6 +12,7 @@ const model = new ChatOpenAI({
 })
 
 const engine = new CogniEngine(model)
+const crisisDetector = new CrisisDetector(model)
 const summaryGenerator = new SessionSummaryGenerator()
 
 export async function generateResponse(
@@ -20,6 +21,22 @@ export async function generateResponse(
   technique: PromptTechnique,
   messages: Message[],
 ) {
+  // Step 0: Crisis detection gate
+  const crisis = await crisisDetector.classify(message)
+
+  if (CrisisDetector.requiresIntervention(crisis.risk)) {
+    console.log('[CrisisDetector] Intervention triggered:', crisis)
+    const safeReply = CrisisDetector.getSafeResponse(crisis.category)
+
+    return {
+      reply: safeReply,
+      identifiedIntent: intent,
+      distortion: undefined,
+      crisis,
+    }
+  }
+
+  // Step 1+: Normal CBT pipeline
   const result = await engine.respond({
     message,
     intent,
@@ -31,6 +48,7 @@ export async function generateResponse(
     reply: result.reply,
     identifiedIntent: result.nextIntent,
     distortion: result.distortion,
+    crisis: { risk: 'LOW', category: 'none', reasoning: '' } as CrisisClassification,
   }
 }
 

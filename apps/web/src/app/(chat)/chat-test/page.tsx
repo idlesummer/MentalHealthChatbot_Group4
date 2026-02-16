@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Chat,
   ChatMessages,
@@ -24,6 +24,7 @@ import { useChatInputStore } from '@/lib/store/chat-input'
 import { useChatMessagesStore } from '@/lib/store/chat-messages'
 import { usePromptStateStore } from '@/lib/blueprints/promptStore'
 import { useSessionDataStore } from '@/lib/store/session-data'
+import { computeSummaryLocally } from '@/lib/compute-summary'
 import { generateResponse, generateSessionSummary } from './actions'
 import { ClipboardList, MessageCircle, Trash2 } from 'lucide-react'
 import type { PromptTechnique, SessionSummary } from '@rainev/cogni'
@@ -41,8 +42,19 @@ export default function ChatTestPage() {
   const scrollRef = useScrollToBottom([messages, isLoading, isTyping])
   const intent = currentIntent
   const [view, setView] = useState<'chat' | 'summary'>('chat')
-  const [summary, setSummary] = useState<SessionSummary | null>(null)
+
+  // LLM-enhanced summary (only generated on explicit user action)
+  const [llmSummary, setLlmSummary] = useState<SessionSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
+
+  // Instant local summary — recomputed reactively when records change
+  const liveSummary = useMemo(() => {
+    if (records.length === 0) return null
+    return computeSummaryLocally(records, promptTechnique)
+  }, [records, promptTechnique])
+
+  // Displayed summary: prefer LLM-enhanced, fall back to instant local
+  const summary = llmSummary ?? liveSummary
 
   // Send handler
   const handleSend = async () => {
@@ -60,15 +72,7 @@ export default function ChatTestPage() {
 
     addMessage(reply, 'Pebbles')
 
-    // Track the turn for summary
-    const newRecord = {
-      intent,
-      userMessage: text,
-      assistantReply: reply,
-      distortion,
-      nextIntent: identifiedIntent,
-      timestamp: Date.now(),
-    }
+    // Track the turn — updates `records`, which triggers liveSummary recompute
     recordTurn({
       intent,
       userMessage: text,
@@ -77,22 +81,18 @@ export default function ChatTestPage() {
       distortion,
     })
 
-    // Auto-update summary in the background
-    const updatedRecords = [...records, newRecord]
-    setSummaryLoading(true)
-    generateSessionSummary(updatedRecords, promptTechnique)
-      .then(setSummary)
-      .finally(() => setSummaryLoading(false))
+    // Clear stale LLM summary so the live one shows immediately
+    setLlmSummary(null)
   }
 
-  // Generate / refresh summary (also switches to summary view on mobile)
+  // Generate LLM-enhanced summary (switches to summary view on mobile)
   const handleViewSummary = async () => {
     setView('summary')
     if (records.length === 0) return
     setSummaryLoading(true)
     try {
       const result = await generateSessionSummary(records, promptTechnique)
-      setSummary(result)
+      setLlmSummary(result)
     } finally {
       setSummaryLoading(false)
     }
@@ -102,7 +102,7 @@ export default function ChatTestPage() {
   const handleClear = () => {
     clearMessages()
     clearSession()
-    setSummary(null)
+    setLlmSummary(null)
     setView('chat')
   }
 
@@ -204,7 +204,7 @@ export default function ChatTestPage() {
         <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-4">
           {summaryLoading ? (
             <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
-              Generating summary...
+              Generating enhanced summary...
             </div>
           ) : summary ? (
             <SessionSummaryPanel summary={summary} />
