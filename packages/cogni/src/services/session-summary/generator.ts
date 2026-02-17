@@ -220,14 +220,7 @@ export class SessionSummaryGenerator {
         ? `<br/><i>${stage.distortion.distortion} ${Math.round(stage.distortion.confidence * 100)}%</i>`
         : ''
 
-      let moodTag = ''
-      if (intent === 'I3' && moodDelta && moodDelta.preScore !== null) {
-        moodTag = `<br/><b>Mood: ${moodDelta.preScore}/${moodDelta.scale}</b>`
-      } else if (intent === 'I7' && moodDelta && moodDelta.postScore !== null) {
-        moodTag = `<br/><b>Mood: ${moodDelta.postScore}/${moodDelta.scale}</b>`
-      }
-
-      lines.push(`  ${intent}["<b>${label}</b><br/>${snippet}${moodTag}${distortionTag}"]`)
+      lines.push(`  ${intent}["<b>${label}</b><br/>${snippet}${distortionTag}"]`)
     }
 
     const intentOrder = [...visitedIntents.keys()]
