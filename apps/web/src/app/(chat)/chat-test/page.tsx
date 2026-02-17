@@ -26,7 +26,7 @@ import { useChatMessagesStore } from '@/lib/store/chat-messages'
 import { usePromptStateStore } from '@/lib/blueprints/promptStore'
 import { useSessionDataStore } from '@/lib/store/session-data'
 import { generateResponse, generateSessionSummary } from './actions'
-import { ClipboardList, MessageCircle, RefreshCw, Trash2 } from 'lucide-react'
+import { ClipboardList, RefreshCw, Trash2 } from 'lucide-react'
 import type { PromptTechnique, SessionSummary } from '@rainev/cogni'
 
 export default function ChatTestPage() {
@@ -41,7 +41,6 @@ export default function ChatTestPage() {
   const isLoading = useFakeLoading(1500)
   const scrollRef = useScrollToBottom([messages, isLoading, isTyping])
   const intent = currentIntent
-  const [view, setView] = useState<'chat' | 'summary'>('chat')
 
   // LLM-enhanced summary (only generated on explicit user action)
   const [summary, setSummary] = useState<SessionSummary | null>(null)
@@ -76,9 +75,8 @@ export default function ChatTestPage() {
     })
   }
 
-  // Generate LLM-enhanced summary (switches to summary view on mobile)
+  // Generate LLM-enhanced summary
   const handleGenerateSummary = async () => {
-    setView('summary')
     if (records.length === 0) return
     setSummaryLoading(true)
     try {
@@ -94,7 +92,6 @@ export default function ChatTestPage() {
     clearMessages()
     clearSession()
     setSummary(null)
-    setView('chat')
   }
 
   // Handle technique changes
@@ -107,7 +104,7 @@ export default function ChatTestPage() {
   return (
     <div className="flex gap-4 h-full max-w-480 mx-auto">
       {/* Left: Chat */}
-      <div className={view === 'summary' ? 'hidden lg:flex lg:w-1/2' : 'flex w-full lg:w-1/2'}>
+      <div className="flex w-full lg:w-1/2">
         <Chat>
           {/* Header */}
           <div className="flex flex-row items-center pt-4 px-8 space-x-4">
@@ -138,17 +135,6 @@ export default function ChatTestPage() {
             </Select>
 
             <Button
-              variant="outline"
-              size="sm"
-              onClick={handleGenerateSummary}
-              disabled={records.length === 0 || summaryLoading}
-              className="gap-1.5"
-            >
-              <ClipboardList className="h-4 w-4" />
-              Summary
-            </Button>
-
-            <Button
               variant="secondary"
               size="icon"
               onClick={handleClear}
@@ -171,36 +157,21 @@ export default function ChatTestPage() {
         </Chat>
       </div>
 
-      {/* Right: Summary panel — always visible on lg, toggled on mobile */}
-      <div className={
-        view === 'summary'
-          ? 'flex flex-col w-full lg:w-1/2 bg-background rounded-2xl shadow-sm overflow-hidden'
-          : 'hidden lg:flex flex-col lg:w-1/2 bg-background rounded-2xl shadow-sm overflow-hidden'
-      }>
+      {/* Right: Summary panel — always visible */}
+      <div className="hidden lg:flex flex-col lg:w-1/2 bg-background rounded-2xl shadow-sm overflow-hidden">
         {/* Summary header */}
         <div className="flex items-center justify-between pt-4 px-6 pb-2">
           <h2 className="text-sm font-semibold">Session Summary</h2>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleGenerateSummary}
-              disabled={records.length === 0 || summaryLoading}
-              className="gap-1.5 text-xs"
-            >
-              <RefreshCw className={cn('h-3.5 w-3.5', summaryLoading && 'animate-spin')} />
-              {summaryLoading ? 'Generating...' : 'Refresh'}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setView('chat')}
-              className="gap-1.5 text-xs lg:hidden"
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              Back to chat
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateSummary}
+            disabled={records.length === 0 || summaryLoading}
+            className="gap-1.5 text-xs"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', summaryLoading && 'animate-spin')} />
+            {summaryLoading ? 'Generating...' : 'Refresh'}
+          </Button>
         </div>
 
         {/* Summary content */}
@@ -215,7 +186,7 @@ export default function ChatTestPage() {
             <div className="flex flex-col items-center justify-center h-40 gap-2 text-sm text-muted-foreground">
               <ClipboardList className="h-6 w-6 opacity-40" />
               <p>No summary yet.</p>
-              <p className="text-xs">Chat with Pebbles, then press <strong>Summary</strong> or <strong>Refresh</strong> to generate one.</p>
+              <p className="text-xs">Chat with Pebbles, then press <strong>Refresh</strong> to generate one.</p>
             </div>
           )}
         </div>
