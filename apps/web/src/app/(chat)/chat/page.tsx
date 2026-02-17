@@ -31,6 +31,7 @@ export default function ChatPage() {
 
   // Local State
   const [intent, setIntent] = useState<Intent>('I1')
+  const [sessionContext, setSessionContext] = useState('')
 
   // Send handler
   const handleSend = async () => {
@@ -39,15 +40,17 @@ export default function ChatPage() {
 
     addMessage(input, 'You')
     clearInput()
-    // await delay(rand(1000, 4000))
 
     setIsTyping(true)
-    const { reply, identifiedIntent } = await generateResponse(input, intent, promptTechnique, messages)
+    const { reply, identifiedIntent, sessionContext: updatedContext } = await generateResponse(
+      input, intent, promptTechnique, messages, sessionContext,
+    )
     console.log('Identified Intent: ', identifiedIntent)
     setIsTyping(false)
 
     addMessage(reply, 'Pebbles')
     setIntent(identifiedIntent)
+    setSessionContext(updatedContext)
   }
 
   return (

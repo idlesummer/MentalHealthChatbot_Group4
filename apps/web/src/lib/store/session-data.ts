@@ -6,8 +6,11 @@ type SessionDataState = {
   records: SessionStageRecord[]
   technique: PromptTechnique
   currentIntent: Intent
+  /** LLM-generated rolling session context — passed to server each turn */
+  sessionContext: string
   setTechnique: (t: PromptTechnique) => void
   setCurrentIntent: (intent: Intent) => void
+  setSessionContext: (ctx: string) => void
   recordTurn: (input: {
     intent: Intent
     userMessage: string
@@ -24,8 +27,10 @@ export const useSessionDataStore = create<SessionDataState>()(
       records: [],
       technique: 'default',
       currentIntent: 'I1',
+      sessionContext: '',
       setTechnique: (technique) => set({ technique }),
       setCurrentIntent: (intent) => set({ currentIntent: intent }),
+      setSessionContext: (sessionContext) => set({ sessionContext }),
       recordTurn: ({ intent, userMessage, assistantReply, nextIntent, distortion }) => {
         const record: SessionStageRecord = {
           intent,
@@ -37,7 +42,7 @@ export const useSessionDataStore = create<SessionDataState>()(
         }
         set({ records: [...get().records, record], currentIntent: nextIntent })
       },
-      clearSession: () => set({ records: [], currentIntent: 'I1' }),
+      clearSession: () => set({ records: [], currentIntent: 'I1', sessionContext: '' }),
     }),
     {
       name: 'session-data-store',

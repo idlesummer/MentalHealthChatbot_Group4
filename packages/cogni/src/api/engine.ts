@@ -22,6 +22,8 @@ export interface CogniRequest {
   intent: Intent
   conversation: Message[]
   technique: PromptTechnique
+  /** LLM-generated rolling session context from previous turns */
+  sessionContext?: string
 }
 
 /** Result from generating a CBT response */
@@ -80,7 +82,7 @@ export class CogniEngine {
    * 3. Generates a response using the LLM
    * 4. Evaluates whether to transition to the next intent
    */
-  async respond({ message, intent, conversation, technique }: CogniRequest) {
+  async respond({ message, intent, conversation, technique, sessionContext }: CogniRequest) {
 
     // Step 1: Identify cognitive distortion
     const distortion = await this.services.distortionClassifier.classify(message)
@@ -92,8 +94,13 @@ export class CogniEngine {
       system: 'Use general CBT-based guidance to assist the user.',
     }
 
+    const contextBlock = sessionContext
+      ? `\nSession context (LLM-generated summary of the CBT session so far):\n${sessionContext}\n`
+      : ''
+
     const replyPrompt = [
       'You are a CBT-based assistant helping the user manage their thoughts and emotions.',
+      contextBlock,
       `Use this conversation history to inform your response:\n${conversation.map(m => `${m.user}: ${m.text}`).join('\n')}`,
       `Use the following guidelines for this stage:\n${intentConfig.system}`,
       `Identified Cognitive Distortion: ${distortion.distortion}.`,

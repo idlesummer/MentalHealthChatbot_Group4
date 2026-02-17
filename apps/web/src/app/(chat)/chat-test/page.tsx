@@ -34,7 +34,7 @@ export default function ChatTestPage() {
   const { input, setInput, clearInput } = useChatInputStore()
   const { messages, addMessage, clearMessages } = useChatMessagesStore()
   const { promptTechnique, setPromptTechnique } = usePromptStateStore()
-  const { records, recordTurn, clearSession, setTechnique, currentIntent } = useSessionDataStore()
+  const { records, recordTurn, clearSession, setTechnique, currentIntent, sessionContext, setSessionContext } = useSessionDataStore()
 
   // UI state
   const [isTyping, setIsTyping] = useState(false)
@@ -65,12 +65,15 @@ export default function ChatTestPage() {
     clearInput()
 
     setIsTyping(true)
-    const { reply, identifiedIntent, distortion } = await generateResponse(
-      input, intent, promptTechnique, messages,
+    const { reply, identifiedIntent, distortion, sessionContext: updatedContext } = await generateResponse(
+      input, intent, promptTechnique, messages, sessionContext,
     )
     setIsTyping(false)
 
     addMessage(reply, 'Pebbles')
+
+    // Persist the updated session context for the next turn
+    setSessionContext(updatedContext)
 
     // Track the turn — updates `records`, which triggers liveSummary recompute
     recordTurn({
