@@ -51,12 +51,16 @@ export default function ChatTestPage() {
     const text = input.trim()
     if (!text) return
 
-    addMessage(input, 'You')
+    addMessage(text, 'You')
     clearInput()
 
     setIsTyping(true)
     const { reply, identifiedIntent, distortion, sessionContext: updatedContext } = await generateResponse(
-      input, intent, promptTechnique, messages, sessionContext,
+      text,
+      intent,
+      promptTechnique,
+      messages,
+      sessionContext,
     )
     setIsTyping(false)
 
