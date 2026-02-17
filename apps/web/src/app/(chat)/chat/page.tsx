@@ -38,12 +38,16 @@ export default function ChatPage() {
     const text = input.trim()
     if (!text) return
 
-    addMessage(input, 'You')
+    addMessage(text, 'You')
     clearInput()
 
     setIsTyping(true)
     const { reply, identifiedIntent, sessionContext: updatedContext } = await generateResponse(
-      input, intent, promptTechnique, messages, sessionContext,
+      text,
+      intent,
+      promptTechnique,
+      messages,
+      sessionContext,
     )
     console.log('Identified Intent: ', identifiedIntent)
     setIsTyping(false)
