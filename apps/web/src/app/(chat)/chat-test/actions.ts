@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { ChatOpenAI } from '@langchain/openai'
 import { CogniEngine, CrisisDetector, SessionSummaryGenerator, INTENT_LABELS } from '@rainev/cogni'
-import type { Intent, PromptTechnique, Message, SessionStageRecord, StageSummaries, CrisisClassification } from '@rainev/cogni'
+import type { Intent, PromptTechnique, Message, SessionStageRecord, StageSummaries, MoodRating, CrisisClassification } from '@rainev/cogni'
 
 const model = new ChatOpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -180,6 +180,43 @@ async function summarizeStages(records: SessionStageRecord[]): Promise<StageSumm
 }
 
 // -----------------------------------------------------------------------------
+// Mood extraction via LLM
+// -----------------------------------------------------------------------------
+
+const MOOD_RATING_SCHEMA = z.object({
+  score: z.number().describe('The numeric mood score the client gave'),
+  scale: z.number().describe('The scale the rating was on (e.g. 10 if "out of 10", 100 if "out of 100")'),
+})
+
+const MOOD_EXTRACTOR_PROMPT = [
+  'You are analyzing a CBT session transcript to extract a mood rating.',
+  'The therapist asked the client to rate their mood on a numeric scale.',
+  'Extract the exact numeric score the client provided and the scale it was on.',
+  'For example: if the client said "9" and the therapist asked on a 1-10 scale, return score=9, scale=10.',
+  'If the therapist asked on a 1-100 scale, return score and scale=100.',
+  'Look at the therapist\'s question to determine the scale, then the client\'s answer for the score.',
+].join(' ')
+
+const moodExtractor = model.withStructuredOutput(MOOD_RATING_SCHEMA)
+
+async function extractMoodRating(record: SessionStageRecord): Promise<MoodRating | undefined> {
+  try {
+    const transcript = [
+      `Therapist (asking for mood rating): ${record.assistantReply}`,
+      `Client response: ${record.userMessage}`,
+    ].join('\n')
+
+    const result = await moodExtractor.invoke([
+      { role: 'system', content: MOOD_EXTRACTOR_PROMPT },
+      { role: 'user', content: transcript },
+    ])
+    return { score: result.score, scale: result.scale }
+  } catch {
+    return undefined
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Public action
 // -----------------------------------------------------------------------------
 
@@ -187,9 +224,23 @@ export async function generateSessionSummary(
   records: SessionStageRecord[],
   technique: PromptTechnique | 'mixed',
 ) {
-  // Step 1: Get LLM-generated stage summaries
-  const llmSummaries = await summarizeStages(records)
+  // Collect first I3 and I7 records for mood extraction
+  const i3Record = records.find(r => r.intent === 'I3')
+  const i7Record = records.find(r => r.intent === 'I7')
 
-  // Step 2: Generate the full summary with LLM summaries baked in
-  return summaryGenerator.generate(records, technique, { stageSummaries: llmSummaries })
+  // Run stage summarization and mood extraction in parallel
+  const [llmSummaries, preMood, postMood] = await Promise.all([
+    summarizeStages(records),
+    i3Record ? extractMoodRating(i3Record) : undefined,
+    i7Record ? extractMoodRating(i7Record) : undefined,
+  ])
+
+  const moodRatings = (preMood || postMood)
+    ? { pre: preMood, post: postMood }
+    : undefined
+
+  return summaryGenerator.generate(records, technique, {
+    stageSummaries: llmSummaries,
+    moodRatings,
+  })
 }

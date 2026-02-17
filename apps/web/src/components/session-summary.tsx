@@ -81,7 +81,7 @@ function MoodDeltaCard({ moodDelta }: { moodDelta: MoodDeltaType | null }) {
     )
   }
 
-  const { preScore, postScore, delta } = moodDelta
+  const { preScore, postScore, scale, delta } = moodDelta
   const hasScores = preScore !== null && postScore !== null && delta !== null
   const improved = delta !== null && delta < 0
 
@@ -92,8 +92,8 @@ function MoodDeltaCard({ moodDelta }: { moodDelta: MoodDeltaType | null }) {
         {hasScores ? (
           <>
             <div className="space-y-2">
-              <MoodBar label="Before (I3)" score={preScore} color="bg-amber-400" />
-              <MoodBar label="After (I7)" score={postScore} color={improved ? 'bg-green-500' : 'bg-red-400'} />
+              <MoodBar label="Before (I3)" score={preScore} scale={scale} color="bg-amber-400" />
+              <MoodBar label="After (I7)" score={postScore} scale={scale} color={improved ? 'bg-green-500' : 'bg-red-400'} />
             </div>
 
             <div className="flex items-center gap-2">
@@ -124,17 +124,19 @@ function MoodDeltaCard({ moodDelta }: { moodDelta: MoodDeltaType | null }) {
   )
 }
 
-function MoodBar({ label, score, color }: { label: string; score: number; color: string }) {
+function MoodBar({ label, score, scale, color }: { label: string; score: number; scale: number; color: string }) {
+  const percent = (score / scale) * 100
+
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs">
         <span className="text-muted-foreground">{label}</span>
-        <span className="font-semibold">{score}/100</span>
+        <span className="font-semibold">{score}/{scale}</span>
       </div>
       <div className="h-3 w-full rounded-full bg-muted overflow-hidden">
         <div
           className={cn('h-full rounded-full transition-all duration-500', color)}
-          style={{ width: `${score}%` }}
+          style={{ width: `${percent}%` }}
         />
       </div>
     </div>

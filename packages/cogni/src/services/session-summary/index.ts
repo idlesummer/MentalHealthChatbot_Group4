@@ -13,6 +13,7 @@ export type {
   SessionStageRecord,
   StageSummaries,
   MoodDelta,
+  MoodRating,
   DistortionProfile,
   IntentFunnel,
 } from './types'

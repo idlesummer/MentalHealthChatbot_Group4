@@ -48,8 +48,16 @@ export interface MoodDelta {
   preScore: number | null
   /** Numeric mood score extracted from I7 (null if not parseable) */
   postScore: number | null
+  /** The scale used for mood ratings (e.g. 10, 100) */
+  scale: number
   /** Numeric change (postScore - preScore), null if either score missing */
   delta: number | null
+}
+
+/** LLM-extracted mood rating for a single stage (I3 or I7) */
+export interface MoodRating {
+  score: number
+  scale: number
 }
 
 /** Aggregated distortion frequency across the session */

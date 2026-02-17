@@ -20,6 +20,7 @@ import type {
   DistortionProfile,
   IntentFunnel,
   MoodDelta,
+  MoodRating,
   SessionStageRecord,
   SessionSummary,
   StageSummaries,
@@ -30,6 +31,8 @@ export interface GenerateOptions {
   /** Per-intent summaries to use instead of raw user messages.
    *  When provided, these override in the Mermaid chart and text summary. */
   stageSummaries?: StageSummaries
+  /** LLM-extracted mood ratings. When provided, these replace regex extraction. */
+  moodRatings?: { pre?: MoodRating; post?: MoodRating }
 }
 
 /** Stateless generator that transforms session records into a typed summary */
@@ -57,7 +60,7 @@ export class SessionSummaryGenerator {
     const rawSummaries = this.buildRawStageSummaries(stages)
     const stageSummaries: StageSummaries = { ...rawSummaries, ...options?.stageSummaries }
 
-    const moodDelta = this.computeMoodDelta(stages)
+    const moodDelta = this.computeMoodDelta(stages, options?.moodRatings)
     const distortionProfile = this.computeDistortionProfile(stages)
     const intentFunnel = this.computeIntentFunnel(stages)
     const mermaidChart = this.buildMermaidChart(stages, moodDelta, stageSummaries)
@@ -102,7 +105,10 @@ export class SessionSummaryGenerator {
   // Mood Delta
   // ---------------------------------------------------------------------------
 
-  private computeMoodDelta(stages: SessionStageRecord[]): MoodDelta | null {
+  private computeMoodDelta(
+    stages: SessionStageRecord[],
+    moodRatings?: { pre?: MoodRating; post?: MoodRating },
+  ): MoodDelta | null {
     const i3 = stages.find(s => s.intent === 'I3')
     const i7 = stages.find(s => s.intent === 'I7')
 
@@ -110,11 +116,14 @@ export class SessionSummaryGenerator {
 
     const preText = i3.userMessage
     const postText = i7?.userMessage ?? ''
-    const preScore = this.extractMoodScore(preText)
-    const postScore = i7 ? this.extractMoodScore(postText) : null
+
+    // Prefer LLM-extracted ratings, fall back to regex
+    const preScore = moodRatings?.pre?.score ?? this.extractMoodScore(preText)
+    const postScore = moodRatings?.post?.score ?? (i7 ? this.extractMoodScore(postText) : null)
+    const scale = moodRatings?.pre?.scale ?? moodRatings?.post?.scale ?? 100
     const delta = preScore !== null && postScore !== null ? postScore - preScore : null
 
-    return { preText, postText, preScore, postScore, delta }
+    return { preText, postText, preScore, postScore, scale, delta }
   }
 
   /** Extract a numeric mood score from free-text user input */
@@ -213,9 +222,9 @@ export class SessionSummaryGenerator {
 
       let moodTag = ''
       if (intent === 'I3' && moodDelta && moodDelta.preScore !== null) {
-        moodTag = `<br/><b>Mood: ${moodDelta.preScore}/100</b>`
+        moodTag = `<br/><b>Mood: ${moodDelta.preScore}/${moodDelta.scale}</b>`
       } else if (intent === 'I7' && moodDelta && moodDelta.postScore !== null) {
-        moodTag = `<br/><b>Mood: ${moodDelta.postScore}/100</b>`
+        moodTag = `<br/><b>Mood: ${moodDelta.postScore}/${moodDelta.scale}</b>`
       }
 
       lines.push(`  ${intent}["<b>${label}</b><br/>${snippet}${moodTag}${distortionTag}"]`)
@@ -265,7 +274,7 @@ export class SessionSummaryGenerator {
     if (stageSummaries.I2) lines.push(`Automatic Thought:   ${stageSummaries.I2}`)
 
     if (moodDelta) {
-      lines.push(`Initial Mood:        ${stageSummaries.I3 ?? moodDelta.preText}${moodDelta.preScore !== null ? ` (${moodDelta.preScore}/100)` : ''}`)
+      lines.push(`Initial Mood:        ${stageSummaries.I3 ?? moodDelta.preText}${moodDelta.preScore !== null ? ` (${moodDelta.preScore}/${moodDelta.scale})` : ''}`)
     }
 
     if (stageSummaries.I4) lines.push(`Evidence For:        ${stageSummaries.I4}`)
@@ -273,7 +282,7 @@ export class SessionSummaryGenerator {
     if (stageSummaries.I6) lines.push(`Alternative Thought: ${stageSummaries.I6}`)
 
     if (moodDelta?.postText) {
-      lines.push(`Re-rated Mood:       ${stageSummaries.I7 ?? moodDelta.postText}${moodDelta.postScore !== null ? ` (${moodDelta.postScore}/100)` : ''}`)
+      lines.push(`Re-rated Mood:       ${stageSummaries.I7 ?? moodDelta.postText}${moodDelta.postScore !== null ? ` (${moodDelta.postScore}/${moodDelta.scale})` : ''}`)
     }
 
     if (moodDelta && moodDelta.delta !== null) {
