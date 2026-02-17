@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
   Chat,
   ChatMessages,
@@ -18,15 +18,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import { useFakeLoading } from '@/hooks/use-fake-loading'
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom'
 import { useChatInputStore } from '@/lib/store/chat-input'
 import { useChatMessagesStore } from '@/lib/store/chat-messages'
 import { usePromptStateStore } from '@/lib/blueprints/promptStore'
 import { useSessionDataStore } from '@/lib/store/session-data'
-import { computeSummaryLocally } from '@/lib/compute-summary'
 import { generateResponse, generateSessionSummary } from './actions'
-import { ClipboardList, MessageCircle, Trash2 } from 'lucide-react'
+import { ClipboardList, MessageCircle, RefreshCw, Trash2 } from 'lucide-react'
 import type { PromptTechnique, SessionSummary } from '@rainev/cogni'
 
 export default function ChatTestPage() {
@@ -44,17 +44,8 @@ export default function ChatTestPage() {
   const [view, setView] = useState<'chat' | 'summary'>('chat')
 
   // LLM-enhanced summary (only generated on explicit user action)
-  const [llmSummary, setLlmSummary] = useState<SessionSummary | null>(null)
+  const [summary, setSummary] = useState<SessionSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
-
-  // Instant local summary — recomputed reactively when records change
-  const liveSummary = useMemo(() => {
-    if (records.length === 0) return null
-    return computeSummaryLocally(records, promptTechnique)
-  }, [records, promptTechnique])
-
-  // Displayed summary: prefer LLM-enhanced, fall back to instant local
-  const summary = llmSummary ?? liveSummary
 
   // Send handler
   const handleSend = async () => {
@@ -75,7 +66,7 @@ export default function ChatTestPage() {
     // Persist the updated session context for the next turn
     setSessionContext(updatedContext)
 
-    // Track the turn — updates `records`, which triggers liveSummary recompute
+    // Track the turn
     recordTurn({
       intent,
       userMessage: text,
@@ -83,19 +74,16 @@ export default function ChatTestPage() {
       nextIntent: identifiedIntent,
       distortion,
     })
-
-    // Clear stale LLM summary so the live one shows immediately
-    setLlmSummary(null)
   }
 
   // Generate LLM-enhanced summary (switches to summary view on mobile)
-  const handleViewSummary = async () => {
+  const handleGenerateSummary = async () => {
     setView('summary')
     if (records.length === 0) return
     setSummaryLoading(true)
     try {
       const result = await generateSessionSummary(records, promptTechnique)
-      setLlmSummary(result)
+      setSummary(result)
     } finally {
       setSummaryLoading(false)
     }
@@ -105,7 +93,7 @@ export default function ChatTestPage() {
   const handleClear = () => {
     clearMessages()
     clearSession()
-    setLlmSummary(null)
+    setSummary(null)
     setView('chat')
   }
 
@@ -152,8 +140,8 @@ export default function ChatTestPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleViewSummary}
-              disabled={records.length === 0}
+              onClick={handleGenerateSummary}
+              disabled={records.length === 0 || summaryLoading}
               className="gap-1.5"
             >
               <ClipboardList className="h-4 w-4" />
@@ -192,15 +180,27 @@ export default function ChatTestPage() {
         {/* Summary header */}
         <div className="flex items-center justify-between pt-4 px-6 pb-2">
           <h2 className="text-sm font-semibold">Session Summary</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setView('chat')}
-            className="gap-1.5 text-xs lg:hidden"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-            Back to chat
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateSummary}
+              disabled={records.length === 0 || summaryLoading}
+              className="gap-1.5 text-xs"
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5', summaryLoading && 'animate-spin')} />
+              {summaryLoading ? 'Generating...' : 'Refresh'}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView('chat')}
+              className="gap-1.5 text-xs lg:hidden"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              Back to chat
+            </Button>
+          </div>
         </div>
 
         {/* Summary content */}
@@ -212,8 +212,10 @@ export default function ChatTestPage() {
           ) : summary ? (
             <SessionSummaryPanel summary={summary} />
           ) : (
-            <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
-              No session data yet. Start chatting to see the summary update live.
+            <div className="flex flex-col items-center justify-center h-40 gap-2 text-sm text-muted-foreground">
+              <ClipboardList className="h-6 w-6 opacity-40" />
+              <p>No summary yet.</p>
+              <p className="text-xs">Chat with Pebbles, then press <strong>Summary</strong> or <strong>Refresh</strong> to generate one.</p>
             </div>
           )}
         </div>

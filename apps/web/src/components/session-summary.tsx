@@ -36,6 +36,7 @@ export function SessionSummaryPanel({ summary }: { summary: SessionSummary }) {
       </div>
       <FlowchartCard mermaidChart={summary.mermaidChart} />
       <StageSummariesCard stageSummaries={summary.stageSummaries} />
+      <ClinicianReportCard textSummary={summary.textSummary} />
     </div>
   )
 }
@@ -191,6 +192,23 @@ function FlowchartCard({ mermaidChart }: { mermaidChart: string }) {
       <CardHeader><CardTitle className="text-sm">CBT Session Flowchart</CardTitle></CardHeader>
       <CardContent>
         <MermaidChart chart={mermaidChart} />
+      </CardContent>
+    </Card>
+  )
+}
+
+// =============================================================================
+// Clinician Report (plain-text summary)
+// =============================================================================
+
+function ClinicianReportCard({ textSummary }: { textSummary: string }) {
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-sm">Clinician Report</CardTitle></CardHeader>
+      <CardContent>
+        <pre className="whitespace-pre-wrap text-xs leading-relaxed font-mono bg-muted/50 rounded-lg p-4 overflow-x-auto">
+          {textSummary}
+        </pre>
       </CardContent>
     </Card>
   )
