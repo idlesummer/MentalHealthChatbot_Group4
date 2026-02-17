@@ -117,7 +117,7 @@ export default function ChatTestPage() {
   }
 
   return (
-    <div className="flex gap-4 h-full max-w-[120rem] mx-auto">
+    <div className="flex gap-4 h-full max-w-480 mx-auto">
       {/* Left: Chat */}
       <div className={view === 'summary' ? 'hidden lg:flex lg:w-1/2' : 'flex w-full lg:w-1/2'}>
         <Chat>
