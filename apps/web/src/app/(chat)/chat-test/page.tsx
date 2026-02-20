@@ -138,11 +138,12 @@ export default function ChatTestPage() {
                 <SelectValue placeholder="Prompt technique" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="pebbles">Pebbles</SelectItem>
                 <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="few-shot">Few-shot</SelectItem>
+                {/* <SelectItem value="few-shot">Few-shot</SelectItem>
                 <SelectItem value="chain-of-thought">Chain-of-thought</SelectItem>
                 <SelectItem value="persona">Persona-based</SelectItem>
-                <SelectItem value="plan-and-solve">Plan-and-solve</SelectItem>
+                <SelectItem value="plan-and-solve">Plan-and-solve</SelectItem> */}
               </SelectContent>
             </Select>
 
