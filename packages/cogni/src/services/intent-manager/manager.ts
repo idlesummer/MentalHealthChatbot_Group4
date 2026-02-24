@@ -15,6 +15,8 @@ import type { IntentPromptConfig, PromptTechnique } from '@/prompts'
 import type { Message } from '../types'
 import type { Intent } from './intents'
 
+// const MAX_TURNS_PER_INTENT = 8
+
 /** Intent transition evaluation result */
 export interface IntentTransition {
   moveToNextIntent: boolean
@@ -48,6 +50,18 @@ export class IntentManager {
     I8: 0,
   }
 
+  //   private intentStallCounts: Record<Intent, number> = {
+  //   I1: 0,
+  //   I2: 0,
+  //   I3: 0,
+  //   I4: 0,
+  //   I5: 0,
+  //   I6: 0,
+  //   I7: 0,
+  //   I8: 0,
+  // }
+
+
   constructor(config: IntentManagerConfig) {
     // Create structured output model for intent evaluation
     this.intentEvaluator = config.model.withStructuredOutput(intentTransitionSchema)
@@ -77,7 +91,7 @@ export class IntentManager {
       '',
       `DECISION RULE (authoritative): ${completionRule}`,
       '',
-      'If the reason indicates that the goal is fulfilled, this should be reflected in the confidence in order to move to the next intent.',
+      'If the reason indicates that the goal is fulfilled, this should be reflected in the confidence in order to move to the next intent. Do not move if user expresses confusion and if completion rule is not fullfilled.',
       'Intent description (for context):',
       intentConfig.system,
     ].join('\n')
@@ -90,6 +104,27 @@ export class IntentManager {
   async computeNextIntent(intent: Intent, message: string, conversation: Message[]): Promise<Intent> {
     try {
       const result = await this.stateMachine.step(intent, message, conversation)
+
+    //  const stayedInSameIntent = result.nextState === intent
+      
+    //   if (stayedInSameIntent) {
+    //     this.intentStallCounts[intent] += 1
+
+    //     if (this.intentStallCounts[intent] >= MAX_TURNS_PER_INTENT) {
+    //       const forcedNext = this.getNextIntentRoute(intent)
+    //       this.intentStallCounts[intent] = 0
+
+    //       if (forcedNext) { 
+    //         this.intentCounts[forcedNext]++
+    //         console.log('Intent counts:', this.intentCounts)
+    //         console.log(`[IntentManager] Forced transition ${intent} -> ${forcedNext} after stall`)
+    //         return forcedNext
+    //       }
+    //     }
+    //   } else {
+    //     // normal transition happened; clear stall on previous intent
+    //     this.intentStallCounts[intent] = 0
+    //   }
 
       // Track intent usage for analytics
       this.intentCounts[result.nextState]++

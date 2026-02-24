@@ -28,7 +28,7 @@ export const useSessionDataStore = create<SessionDataState>()(
   persist(
     (set, get) => ({
       records: [],
-      technique: 'default',
+      technique: 'pebbles',
       currentIntent: 'I1',
       setTechnique: (technique) => set({ technique }),
       setCurrentIntent: (intent) => set({ currentIntent: intent }),

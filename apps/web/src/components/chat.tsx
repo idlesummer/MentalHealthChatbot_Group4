@@ -33,8 +33,8 @@ export function Chat({ children }: PropsWithChildren) {
 export function ChatHeader() {
   // TODO: Temporary
   const clearMessages = useChatMessagesStore(s => s.clearMessages)
-  const promptTechnique = usePromptStateStore((s) => s.promptTechnique)
-  const setPromptTechnique = usePromptStateStore(s => s.setPromptTechnique)
+  // const promptTechnique = usePromptStateStore((s) => s.promptTechnique)
+  // const setPromptTechnique = usePromptStateStore(s => s.setPromptTechnique)
   return (
     <div className="flex flex-row items-center pt-4 px-8 space-x-4">
       <Avatar className="h-10 w-10 bg-muted border-2 border-green-400">
@@ -46,7 +46,7 @@ export function ChatHeader() {
         <p className="text-xs text-green-400">Online</p>
       </div>
 
-      <Select
+      {/* <Select
         value={promptTechnique}
         onValueChange={(value: string) =>
           setPromptTechnique(value as typeof promptTechnique)
@@ -58,12 +58,12 @@ export function ChatHeader() {
         <SelectContent>
           <SelectItem value="pebbles">Pebbles</SelectItem>
           <SelectItem value="default">Default</SelectItem>
-          {/* <SelectItem value="few-shot">Few-shot</SelectItem>
+          <SelectItem value="few-shot">Few-shot</SelectItem>
           <SelectItem value="chain-of-thought">Chain-of-thought</SelectItem>
           <SelectItem value="persona">Persona-based</SelectItem>
-          <SelectItem value="plan-and-solve">Plan-and-solve</SelectItem> */}
+          <SelectItem value="plan-and-solve">Plan-and-solve</SelectItem>
         </SelectContent>
-      </Select>
+      </Select> */}
 
 
       <SendSessionButton/>
