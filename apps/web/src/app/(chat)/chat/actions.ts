@@ -15,7 +15,7 @@ function requireEnv(name: string): string {
 
 const model = new ChatOpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
-  model: 'gpt-4o-mini',
+  model: 'gpt-4.1',
   temperature: 0.2,
 })
 

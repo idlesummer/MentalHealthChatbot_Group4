@@ -85,9 +85,12 @@ export class CogniEngine {
     // Step 1: Identify cognitive distortion
     const distortion = await this.services.distortionClassifier.classify(message)
 
+    const evaluatedIntent = await this.services.intentManager.computeNextIntent(intent, message, conversation)
+    const nextIntent = evaluatedIntent || intent
+
     // Step 2: Build the reply prompt
     const techniquePrompts = PROMPT_REGISTRY[technique]
-    const intentConfig: IntentPromptConfig = techniquePrompts?.[intent] ?? {
+    const intentConfig: IntentPromptConfig = techniquePrompts?.[nextIntent] ?? {
       role: 'Default CBT-base assistant',
       system: 'Use general CBT-based guidance to assist the user.',
     }
@@ -108,8 +111,8 @@ export class CogniEngine {
     const reply = result.reply
 
     // Step 4: Compute next intent
-    const newIntent = await this.services.intentManager.computeNextIntent(intent, message, conversation)
-    const nextIntent = newIntent || intent
+    // const newIntent = await this.services.intentManager.computeNextIntent(intent, message, conversation)
+    // const nextIntent = newIntent || intent
     const response: CogniResponse = { reply, nextIntent, distortion }
     return response
   }
