@@ -75,20 +75,21 @@ export class CogniEngine {
    *
    * This is the main method for interacting with the CBT pipeline.
    * It orchestrates the following steps:
-   * 1. Identifies cognitive distortions in the message
-   * 2. Builds a prompt using the selected technique and current intent
-   * 3. Generates a response using the LLM
-   * 4. Evaluates whether to transition to the next intent
+   * 1) Identifies cognitive distortions in the message
+   * 2) Manages intent
+   * 3) Builds a prompt using the selected technique and current intent
+   *    Generates a response using the LLM
    */
   async respond({ message, intent, conversation, technique }: CogniRequest) {
 
-    // Step 1: Identify cognitive distortion
+    // TODO: Step 1: Identify cognitive distortion
     const distortion = await this.services.distortionClassifier.classify(message)
 
+    // TODO: Step 2: Intent Manager
     const evaluatedIntent = await this.services.intentManager.computeNextIntent(intent, message, conversation)
     const nextIntent = evaluatedIntent || intent
 
-    // Step 2: Build the reply prompt
+    // // Step 2: Build the reply prompt
     const techniquePrompts = PROMPT_REGISTRY[technique]
     const intentConfig: IntentPromptConfig = techniquePrompts?.[nextIntent] ?? {
       role: 'Default CBT-base assistant',
@@ -106,13 +107,12 @@ export class CogniEngine {
       'Please respond in a way that aligns with the user\'s CBT stage and identified distortion.',
     ].join('\n')
 
-    // Step 3: Generate reply with structured output
+    // // Step 3: Generate reply with structured output
+    // TODO: Step 3: Reply Generator
     const result = await this.services.replyGenerator.generate(replyPrompt)
     const reply = result.reply
 
-    // Step 4: Compute next intent
-    // const newIntent = await this.services.intentManager.computeNextIntent(intent, message, conversation)
-    // const nextIntent = newIntent || intent
+    // // Step 4: Compute next intent
     const response: CogniResponse = { reply, nextIntent, distortion }
     return response
   }
