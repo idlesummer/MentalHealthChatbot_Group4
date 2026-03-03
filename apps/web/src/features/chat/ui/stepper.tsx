@@ -2,7 +2,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { createContext, useContext, useState, ComponentProps } from 'react'
+import { createContext, useContext, useState, useEffect, ComponentProps } from 'react'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { cn } from '@/lib/utils'
 
@@ -26,11 +26,16 @@ export function useStepper() {
 export type StepperProviderProps = {
   steps: string[]
   initialStep?: number
+  step?: number
   children: ReactNode
 }
 
-export function StepperProvider({ steps, initialStep=0, children }: StepperProviderProps) {
-  const [currentStep, setCurrentStep] = useState(initialStep)
+export function StepperProvider({ steps, initialStep=0, step: controlledStep, children }: StepperProviderProps) {
+  const [currentStep, setCurrentStep] = useState(controlledStep ?? initialStep)
+
+  useEffect(() => {
+    if (controlledStep !== undefined) setCurrentStep(controlledStep)
+  }, [controlledStep])
 
   return (
     <StepperContext.Provider value={{

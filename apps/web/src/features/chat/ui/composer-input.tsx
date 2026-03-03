@@ -77,7 +77,7 @@ export function ComposerSendButton({ className, ...props }: ComposerSendButtonPr
       variant="default"
       size="icon-sm"
       aria-label="Send"
-      className={cn('hover:bg-primary/80 text-background cursor-pointer', className)}
+      className={cn('hover:bg-primary/80 text-background cursor-pointer disabled:cursor-not-allowed', className)}
       {...props}
     >
       <ArrowBigUp />

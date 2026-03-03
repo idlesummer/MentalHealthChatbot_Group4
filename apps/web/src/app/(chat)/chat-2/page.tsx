@@ -51,7 +51,7 @@ export default function Chat2Page() {
 
   const handleSend = async () => {
     const text = input.trim()
-    if (!text || isTyping) return
+    if (!text || isTyping || input.length > MAX_CHARS) return
 
     addMessage(text, 'You')
     clearInput()
@@ -121,7 +121,7 @@ export default function Chat2Page() {
   }
 
   return (
-    <Chat.StepperProvider steps={CBT_STEPS}>
+    <Chat.StepperProvider steps={CBT_STEPS} step={parseInt(currentIntent.replace('I', '')) - 1}>
       <Chat.Background>
         <Chat.Root>
 

@@ -7,7 +7,7 @@ export function Background({ className, children, ...props }: BackgroundProps) {
   return (
     <div
       data-slot="chat-background"
-      className={cn('relative h-full', className)}
+      className={cn('relative isolate h-full', className)}
       {...props}
     >
       <div
