@@ -138,7 +138,6 @@ export default function Chat2Page() {
                   src="/avatars/pebbles.svg"
                   alt="Pebbles"
                   fallback="P"
-                  status="online"
                 />
                 <Chat.HeaderInfo
                   name="Pebbles"
@@ -291,7 +290,6 @@ export default function Chat2Page() {
                         src="/avatars/pebbles.svg"
                         alt="Pebbles"
                         fallback="P"
-                        status="online"
                         size="sm"
                       />
                     )}
@@ -322,7 +320,6 @@ export default function Chat2Page() {
                     src="/avatars/pebbles.svg"
                     alt="Pebbles"
                     fallback="P"
-                    status="online"
                     size="sm"
                   />
                   <Chat.MessageContent>
