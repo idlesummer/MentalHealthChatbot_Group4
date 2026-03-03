@@ -137,7 +137,7 @@ export default function Chat2Page() {
                 />
                 <Chat.HeaderInfo
                   name="Pebbles"
-                  status={`Online · ${currentIntent} · ${records.length} turn${records.length !== 1 ? 's' : ''}`}
+                  status="Online"
                 />
                 <Chat.Toolbar>
                   <Chat.DialogButton>
@@ -157,7 +157,7 @@ export default function Chat2Page() {
                                 placeholder="Your name"
                                 value={exportName}
                                 onChange={e => setExportName(e.target.value)}
-                                className="h-8 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring w-32"
+                                className="bg-background px-3 border border-input rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring w-32 h-8 text-sm"
                               />
                               <Chat.DialogRowButton
                                 onClick={handleExport}
@@ -211,14 +211,14 @@ export default function Chat2Page() {
 
                         <Chat.DialogSection title="Session Summary">
                           {summaryLoading ? (
-                            <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+                            <div className="flex flex-col justify-center items-center gap-3 py-16 text-muted-foreground">
                               <Loader2 className="size-6 animate-spin" />
                               <span className="text-sm">Generating enhanced clinical summary…</span>
                             </div>
                           ) : summary ? (
                             <SessionSummaryPanel summary={summary} />
                           ) : (
-                            <div className="flex flex-col items-center justify-center gap-2 py-16 text-center text-muted-foreground">
+                            <div className="flex flex-col justify-center items-center gap-2 py-16 text-muted-foreground text-center">
                               <span className="text-sm">No session data yet.</span>
                               <span className="text-xs">Start chatting — the summary will update live after each turn.</span>
                             </div>
@@ -230,13 +230,13 @@ export default function Chat2Page() {
                       {/* ── About tab ────────────────────────────────────── */}
                       <Chat.DialogTabsContent value="About">
                         <Chat.DialogSection title="About Pebbles">
-                          <p className="text-sm leading-relaxed text-muted-foreground">
+                          <p className="text-muted-foreground text-sm leading-relaxed">
                             Pebbles is an AI-powered Cognitive Behavioral Therapy (CBT) companion
                             designed to guide you through a structured single-session CBT experience.
                             Using evidence-based techniques, Pebbles helps you explore your thoughts,
                             identify cognitive distortions, and develop healthier perspectives.
                           </p>
-                          <p className="text-sm leading-relaxed text-muted-foreground">
+                          <p className="text-muted-foreground text-sm leading-relaxed">
                             <strong className="text-foreground">Important:</strong> Pebbles is not a
                             real therapist. This tool is not a substitute for professional mental health
                             care. If you are in crisis, please contact a licensed mental health
@@ -244,10 +244,10 @@ export default function Chat2Page() {
                           </p>
                         </Chat.DialogSection>
                         <Chat.DialogSection title="CBT Stages">
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="gap-2 grid grid-cols-2">
                             {CBT_STEPS.map((step, i) => (
                               <div key={step} className="flex items-center gap-2 text-sm">
-                                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                                <span className="flex justify-center items-center bg-primary/10 rounded-full size-5 font-bold text-[10px] text-primary shrink-0">
                                   {i + 1}
                                 </span>
                                 <span className="text-muted-foreground">{step}</span>
