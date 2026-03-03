@@ -12,7 +12,7 @@ export function Composer({ className, ...props }: ComposerProps) {
         'w-full min-w-xs max-w-7xl',
         'gap-0',
         'px-4 pb-2',
-        'border-x bg-background',
+        'border-x bg-transparent',
         className,
       )}
       {...props}
