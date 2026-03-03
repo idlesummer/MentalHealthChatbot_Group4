@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import * as Chat from '@/features/chat/ui'
+import { useScroll } from '@/features/chat/hooks/use-scroll'
 import { SessionSummaryPanel } from '@/components/session-summary'
 import { useFakeLoading } from '@/hooks/use-fake-loading'
 import { useChatInputStore } from '@/lib/store/chat-input'
@@ -32,6 +33,8 @@ export default function Chat2Page() {
   const { promptTechnique } = usePromptStateStore()
   const { records, recordTurn, clearSession, setTechnique, currentIntent } = useSessionDataStore()
 
+  const scroll = useScroll()
+
   const [isTyping, setIsTyping] = useState(false)
   const isLoading = useFakeLoading(1500)
 
@@ -55,6 +58,7 @@ export default function Chat2Page() {
 
     addMessage(text, 'You')
     clearInput()
+    scroll.scrollToBottom()
 
     setIsTyping(true)
     const { reply, identifiedIntent, distortion } = await generateResponse(
@@ -66,6 +70,7 @@ export default function Chat2Page() {
     setIsTyping(false)
 
     addMessage(reply, 'Pebbles')
+    scroll.scrollToBottom()
     recordTurn({
       intent: currentIntent,
       userMessage: text,
@@ -269,7 +274,7 @@ export default function Chat2Page() {
           </Chat.Header>
 
           {/* ── Messages ──────────────────────────────────────────────────── */}
-          <Chat.Content>
+          <Chat.Content scroll={scroll}>
             <Chat.ScrollArea>
               {!isLoading && messages.map((m, i) => {
                 const isSender = m.user === 'You'

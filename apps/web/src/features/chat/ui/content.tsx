@@ -13,9 +13,12 @@ export function useContentContext() {
   return context
 }
 
-export type ContentProps = ComponentProps<'div'>
-export function Content({ className, children, ...props }: ContentProps) {
-  const scroll = useScroll()
+export type ContentProps = ComponentProps<'div'> & {
+  scroll?: ContentContextType
+}
+export function Content({ className, children, scroll: externalScroll, ...props }: ContentProps) {
+  const internalScroll = useScroll()
+  const scroll = externalScroll ?? internalScroll
 
   return (
     <ContentContext.Provider value={scroll}>
