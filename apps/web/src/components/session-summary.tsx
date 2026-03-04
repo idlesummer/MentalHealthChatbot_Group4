@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MermaidChart } from '@/components/mermaid-chart'
 import { cn } from '@/lib/utils'
-import type { SessionSummary, Intent, MoodDelta as MoodDeltaType, DistortionProfile as DistortionProfileType } from '@rainev/cogni'
+import type { SessionSummary, Intent, MoodDelta as MoodDeltaType, DistortionProfile as DistortionProfileType, IntentFunnel as IntentFunnelType } from '@rainev/cogni'
 
 const INTENT_LABELS: Record<Intent, string> = {
   I1: 'Situation',
@@ -34,6 +34,7 @@ export function SessionSummaryPanel({ summary }: { summary: SessionSummary }) {
         <MoodDeltaCard moodDelta={summary.moodDelta} />
         <DistortionProfileCard distortionProfile={summary.distortionProfile} />
       </div>
+      <IntentTransitionSpeedCard intentFunnel={summary.intentFunnel} />
       <FlowchartCard mermaidChart={summary.mermaidChart} />
       <StageSummariesCard stageSummaries={summary.stageSummaries} />
     </div>
@@ -176,6 +177,58 @@ function DistortionProfileCard({ distortionProfile }: { distortionProfile: Disto
             </div>
           </div>
         ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+// =============================================================================
+// Intent Transition Speed
+// =============================================================================
+
+function IntentTransitionSpeedCard({ intentFunnel }: { intentFunnel: IntentFunnelType[] }) {
+  const visited = intentFunnel.filter(f => f.completed)
+  const avgTurns = visited.length > 0
+    ? visited.reduce((sum, f) => sum + f.turns, 0) / visited.length
+    : null
+  const maxTurns = Math.max(...intentFunnel.map(f => f.turns), 1)
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm">Intent Transition Speed</CardTitle>
+          {avgTurns !== null && (
+            <span className="text-xs text-muted-foreground">
+              avg <strong className="text-foreground">{avgTurns.toFixed(1)}</strong> turns/stage
+            </span>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2.5">
+        {intentFunnel.map(f => (
+          <div key={f.intent} className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className={cn('font-medium', !f.completed && 'text-muted-foreground')}>
+                {f.label}
+              </span>
+              <span className="text-muted-foreground tabular-nums">
+                {f.completed ? `${f.turns} turn${f.turns !== 1 ? 's' : ''}` : '—'}
+              </span>
+            </div>
+            <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+              {f.completed && (
+                <div
+                  className="h-full rounded-full bg-sky-500 transition-all duration-500"
+                  style={{ width: `${(f.turns / maxTurns) * 100}%` }}
+                />
+              )}
+            </div>
+          </div>
+        ))}
+        {visited.length === 0 && (
+          <p className="text-sm text-muted-foreground">No stages completed yet.</p>
+        )}
       </CardContent>
     </Card>
   )
