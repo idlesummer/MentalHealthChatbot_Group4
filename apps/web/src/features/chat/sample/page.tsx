@@ -3,7 +3,7 @@
 // import { ComponentExample } from '@/components/component-example'
 import * as Chat from '@/features/chat/ui'
 import mermaid from 'mermaid'
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 
 export default function Page() {
   const steps = [
@@ -25,7 +25,7 @@ export default function Page() {
           <Chat.Header>
             <Chat.HeaderGroup>
               <Chat.HeaderRow>
-                <Chat.HeaderAvatar src="https://github.com/shadcn.png" alt="@shadcn" fallback="CN" status="online" />
+                <Chat.HeaderAvatar src="https://github.com/shadcn.png" alt="@shadcn" fallback="CN" />
                 <Chat.HeaderInfo name="Pebbles" status="Online" />
                 <Chat.Toolbar>
                   <Chat.DialogButton>
@@ -104,7 +104,7 @@ export default function Page() {
               </Chat.Message>
 
               <Chat.Message variant='receiver'>
-                <Chat.Avatar src="https://github.com/shadcn.png" alt="@shadcn" fallback="CN" status="online" size="sm" />
+                <Chat.Avatar src="https://github.com/shadcn.png" alt="@shadcn" fallback="CN" size="sm" />
                 <Chat.MessageContent>
                   <Chat.MessageAuthor>Pebbles</Chat.MessageAuthor>
                   <Chat.BubbleGroup>
@@ -136,7 +136,7 @@ export default function Page() {
                       </Chat.BubbleActions>
                     </Chat.Bubble>
                     <Chat.Bubble>
-                      <Chat.BubbleText>I'm currently designing this webpage</Chat.BubbleText>
+                      <Chat.BubbleText>{'I\'m currently designing this webpage'}</Chat.BubbleText>
                       <Chat.BubbleActions>
                         <Chat.BubbleCopyButton value={'Hello world'} />
                       </Chat.BubbleActions>
@@ -173,7 +173,7 @@ export default function Page() {
                       </Chat.BubbleActions>
                     </Chat.Bubble>
                     <Chat.Bubble>
-                      <Chat.BubbleText>I'm currently designing this webpage</Chat.BubbleText>
+                      <Chat.BubbleText>{'I\'m currently designing this webpage'}</Chat.BubbleText>
                       <Chat.BubbleActions>
                         <Chat.BubbleCopyButton value={'Hello world'} />
                       </Chat.BubbleActions>
@@ -190,7 +190,7 @@ export default function Page() {
               </Chat.Message>
 
               <Chat.Message variant='receiver' align='bottom'>
-                <Chat.Avatar src="https://github.com/shadcn.png" alt="@shadcn" fallback="CN" status="online" size="sm" />
+                <Chat.Avatar src="https://github.com/shadcn.png" alt="@shadcn" fallback="CN" size="sm" />
                 <Chat.MessageContent>
                   <Chat.MessageAuthor>Pebbles</Chat.MessageAuthor>
                   <Chat.BubbleGroup>
@@ -218,7 +218,7 @@ export default function Page() {
               </Chat.Message>
 
               <Chat.Message variant='receiver'>
-                <Chat.Avatar src="https://github.com/shadcn.png" alt="@shadcn" fallback="CN" status="online" size="sm" />
+                <Chat.Avatar src="https://github.com/shadcn.png" alt="@shadcn" fallback="CN" size="sm" />
                 <Chat.MessageContent>
                   <Chat.MessageAuthor>Pebbles</Chat.MessageAuthor>
                   <Chat.BubbleGroup>
@@ -267,18 +267,17 @@ mermaid.initialize({ startOnLoad: false })
 
 function Chart({ chart }: { chart: string }) {
   const ref = useRef<HTMLDivElement>(null)
-  const idRef = useRef(`mermaid-${Math.random().toString(36).slice(2)}`)
+  const [id] = useState(() => `mermaid-${Math.random().toString(36).slice(2)}`)
 
   useEffect(() => {
     if (!ref.current) return
-    // Remove existing element with this ID before re-rendering
-    document.getElementById(idRef.current)?.remove()
-    mermaid.render(idRef.current, chart)
+    document.getElementById(id)?.remove()
+    mermaid.render(id, chart)
       .then(({ svg }) => {
         if (ref.current) ref.current.innerHTML = svg
       })
       .catch(console.error)
-  }, [chart])
+  }, [chart, id])
 
   return <div ref={ref} />
 }
