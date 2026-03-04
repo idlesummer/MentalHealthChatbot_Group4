@@ -17,6 +17,7 @@ export function ComposerGroup({ className, ...props }: ComposerGroupProps) {
         'gap-1 bg-muted shadow-2xs p-4 border border-b-0 rounded-xl',
         'has-[[data-slot=input-group-control]:focus-visible]:ring-0',
         'has-[[data-slot=input-group-control]:focus-visible]:border-input',
+        'opacity-100! bg-muted!',
         className,
       )}
       {...props}
