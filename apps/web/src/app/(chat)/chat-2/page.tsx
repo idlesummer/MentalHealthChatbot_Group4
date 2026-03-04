@@ -31,7 +31,7 @@ export default function Chat2Page() {
   const { input, setInput, clearInput } = useChatInputStore()
   const { messages, addMessage, clearMessages } = useChatMessagesStore()
   const { promptTechnique } = usePromptStateStore()
-  const { records, recordTurn, clearSession, setTechnique, currentIntent } = useSessionDataStore()
+  const { records, recordTurn, clearSession, currentIntent } = useSessionDataStore()
 
   const scroll = useScroll()
 
