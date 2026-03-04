@@ -1,26 +1,31 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 
 export function useScroll() {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const elementRef = useRef<HTMLDivElement | null>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [isScrollReady, setIsScrollReady] = useState(false)
 
-  useLayoutEffect(() => {
-    const element = containerRef.current
+  const containerRef = useCallback((element: HTMLDivElement | null) => {
+    elementRef.current = element
     if (!element) return
-    element.scrollTop = element.scrollHeight
     setIsScrollReady(true)
   }, [])
 
+  useLayoutEffect(() => {
+    const element = elementRef.current
+    if (!element) return
+    element.scrollTop = element.scrollHeight
+  }, [])
+
   const handleScroll = () => {
-    if (!containerRef.current) return
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current
+    if (!elementRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = elementRef.current
     setIsAtBottom(scrollHeight - scrollTop - clientHeight <= 10)
   }
 
   const scrollToBottom = () => {
-    containerRef.current?.scrollTo({
-      top: containerRef.current.scrollHeight,
+    elementRef.current?.scrollTo({
+      top: elementRef.current.scrollHeight,
       behavior: 'smooth',
     })
   }
