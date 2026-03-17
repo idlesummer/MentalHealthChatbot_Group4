@@ -103,7 +103,7 @@ export class CogniEngine {
       '',
       `User Message:\n'${message}'`,
       '',
-      'Please respond in a way that aligns with the user\'s CBT stage and identified distortion.',
+      'Please respond in a way that aligns with the user\'s CBT stage and identified distortion. Avoid repetitive wording.',
     ].join('\n')
 
     // Step 3: Generate reply with structured output
